@@ -26,14 +26,16 @@ Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const int BLASTER_PIN = 8;
 const int POT_PIN = A0;
 
+int _lastPress = HIGH;
+
 const int GAME_FIELD_WIDTH = 86;
 const int SHIP_Y_POS = 59;
-const int LASER_WIDTH = 1;
-const int LASER_HEIGHT = 3;
+const int LASER_WIDTH = 6;
+const int LASER_HEIGHT = 6;
 
-// const int MAX_LASERS = 2; // max amount of lasers on the field at a time
-int _laser[2]; // array representing the last x and y position of this laser.
-bool _laserPresent; // if a laser is already present on the field
+const int MAX_LASERS = 2; // max amount of lasers on the field at a time
+int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
+int _lasersPresent; // if a laser is already present on the field
 
 void setup() {
   Serial.begin(9600);
@@ -54,7 +56,7 @@ void setup() {
   // Clear the buffer
   _display.clearDisplay();
 
-  _laserPresent = false;
+  _lasersPresent = 0;
 
   pinMode(BLASTER_PIN, INPUT_PULLUP);
 }
@@ -65,24 +67,39 @@ void loop() {
   int moveInput = analogRead(POT_PIN);
   // Serial.println(moveInput);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
-  Serial.println(shipPosx);
+  // Serial.println(shipPosx);
   drawShip(shipPosx, SHIP_Y_POS);
 
   int shootbtn = digitalRead(BLASTER_PIN);
-  if (!_laserPresent && shootbtn == LOW) {
+  if (_lasersPresent < MAX_LASERS && shootbtn != _lastPress && shootbtn == LOW) {
     // draw new laser at the ship
+    Serial.print("new laser at ");
+    Serial.println(shipPosx);
     newLaser(shipPosx, SHIP_Y_POS);
   }
-  if (_laserPresent && _laser[1] > 0) {
-    // calculate new position, redraw laser
-    _laser[1] -= 8;
-    _display.fillRect(_laser[0], _laser[1], LASER_WIDTH, LASER_HEIGHT, WHITE);
-  } else {
-    _laserPresent = false;
+
+  // if there are lasers present
+  if (_lasersPresent > 0) {
+    // calculate new positions, redraw laser
+    for (int i = 0; i < _lasersPresent; i++) {
+      _laser[i][1] -= 8;
+      Serial.print("current laser's y: ");
+      Serial.println(_laser[i][1]);
+      // check if current laser is now above the screen
+      if (_laser[i][1] < 0) {
+        Serial.print("removed laser ");
+        Serial.println(i);
+        _lasersPresent--;
+      } else {
+        _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
+      }
+    }
   }
 
+  _lastPress = shootbtn;
+
   _display.display();
-  delay(50);
+  delay(10);
 }
 
 /**
@@ -98,9 +115,10 @@ void drawShip(int x, int y) {
  * The coordinate defines the bottom of the blast.
 */
 void newLaser(int x, int y) {\
-  _laserPresent = true;
+  _lasersPresent++;
 
   // set position
-  _laser[0] = x;
-  _laser[1] = y;
+  // TODO: fix _lasersPresent indexing of lasers
+  _laser[_lasersPresent-1][0] = x;
+  _laser[_lasersPresent-1][1] = y;
 }
