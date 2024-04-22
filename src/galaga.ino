@@ -30,10 +30,12 @@ int _lastPress = HIGH;
 
 const int GAME_FIELD_WIDTH = 86;
 const int SHIP_Y_POS = 59;
-const int LASER_WIDTH = 6;
-const int LASER_HEIGHT = 6;
+const int LASER_WIDTH = 1;
+const int LASER_HEIGHT = 2;
 
-const int MAX_LASERS = 2; // max amount of lasers on the field at a time
+const int MAX_LASERS = 50; // max amount of lasers on the field at a time (default 2)
+const int LASER_REMOVED_MARKER = -10; // Y value that signifies the laser will not be removed
+const int LASER_SPEED = 2; // default is 8?
 int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
 int _lasersPresent; // if a laser is already present on the field
 
@@ -65,10 +67,14 @@ void loop() {
   _display.clearDisplay();
 
   int moveInput = analogRead(POT_PIN);
-  // Serial.println(moveInput);
+  Serial.println(moveInput);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
   // Serial.println(shipPosx);
   drawShip(shipPosx, SHIP_Y_POS);
+  
+  for (int i = 3; i < 9; i++) {
+    drawBug((i * 2) + i, 3);
+  }
 
   int shootbtn = digitalRead(BLASTER_PIN);
   if (_lasersPresent < MAX_LASERS && shootbtn != _lastPress && shootbtn == LOW) {
@@ -78,21 +84,36 @@ void loop() {
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
+  bool readjustLasers = false;
+
   // if there are lasers present
   if (_lasersPresent > 0) {
     // calculate new positions, redraw laser
     for (int i = 0; i < _lasersPresent; i++) {
-      _laser[i][1] -= 8;
+      _laser[i][1] -= LASER_SPEED;
       Serial.print("current laser's y: ");
       Serial.println(_laser[i][1]);
       // check if current laser is now above the screen
       if (_laser[i][1] < 0) {
+        // mark it as removed
         Serial.print("removed laser ");
         Serial.println(i);
-        _lasersPresent--;
+        _laser[i][1] = LASER_REMOVED_MARKER;
+        readjustLasers = true;
       } else {
         _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
       }
+    }
+  }
+
+  if (readjustLasers) {
+    // move all lasers down 
+    for (int i = 0; i < _lasersPresent-1; i++) {
+      if (_laser[i][1] == -10) {
+        _laser[i][0] = _laser[i+1][0];
+        _laser[i][1] = _laser[i+1][1];
+      }
+      _lasersPresent--;
     }
   }
 
@@ -104,10 +125,18 @@ void loop() {
 
 /**
  * Draws the ship at the given coordinate.
- * The coordinate defines the top left part of the ship.
+ * The coordinate defines the top middle of the ship.
 */
 void drawShip(int x, int y) {
   _display.fillTriangle(x, y, x-2, y+5, x+2, y+5, WHITE);
+}
+
+/**
+ * Draws a bug at the given coordinate.
+ * The coordinate defines the top left of the bug.
+*/
+void drawBug(int x, int y) {
+  _display.fillRect(x, y, 2, 2, WHITE);
 }
 
 /**
