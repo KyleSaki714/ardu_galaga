@@ -33,11 +33,10 @@ const int SHIP_Y_POS = 59;
 const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 2;
 
-const int MAX_LASERS = 50; // max amount of lasers on the field at a time (default 2)
-const int LASER_REMOVED_MARKER = -10; // Y value that signifies the laser will not be removed
+const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
+const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 const int LASER_SPEED = 2; // default is 8?
 int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
-int _lasersPresent; // if a laser is already present on the field
 
 void setup() {
   Serial.begin(9600);
@@ -52,13 +51,16 @@ void setup() {
 
   // Show initial display buffer contents on the screen --
   // the library initializes this with an Adafruit splash screen.
-  _display.display();  
+  _display.display();
   delay(2000); // Pause for 2 seconds
 
   // Clear the buffer
   _display.clearDisplay();
 
-  _lasersPresent = 0;
+  for (int i = 0; i < MAX_LASERS; i++) {
+    _laser[i][0] = 0;
+    _laser[i][1] = LASER_REMOVED_MARKER;
+  }
 
   pinMode(BLASTER_PIN, INPUT_PULLUP);
 }
@@ -67,55 +69,25 @@ void loop() {
   _display.clearDisplay();
 
   int moveInput = analogRead(POT_PIN);
-  Serial.println(moveInput);
+  // Serial.println(moveInput);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
   // Serial.println(shipPosx);
   drawShip(shipPosx, SHIP_Y_POS);
-  
+
   for (int i = 3; i < 9; i++) {
     drawBug((i * 2) + i, 3);
   }
 
+
   int shootbtn = digitalRead(BLASTER_PIN);
-  if (_lasersPresent < MAX_LASERS && shootbtn != _lastPress && shootbtn == LOW) {
+  if (shootbtn != _lastPress && shootbtn == LOW) {
     // draw new laser at the ship
     Serial.print("new laser at ");
     Serial.println(shipPosx);
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
-  bool readjustLasers = false;
-
-  // if there are lasers present
-  if (_lasersPresent > 0) {
-    // calculate new positions, redraw laser
-    for (int i = 0; i < _lasersPresent; i++) {
-      _laser[i][1] -= LASER_SPEED;
-      Serial.print("current laser's y: ");
-      Serial.println(_laser[i][1]);
-      // check if current laser is now above the screen
-      if (_laser[i][1] < 0) {
-        // mark it as removed
-        Serial.print("removed laser ");
-        Serial.println(i);
-        _laser[i][1] = LASER_REMOVED_MARKER;
-        readjustLasers = true;
-      } else {
-        _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
-      }
-    }
-  }
-
-  if (readjustLasers) {
-    // move all lasers down 
-    for (int i = 0; i < _lasersPresent-1; i++) {
-      if (_laser[i][1] == -10) {
-        _laser[i][0] = _laser[i+1][0];
-        _laser[i][1] = _laser[i+1][1];
-      }
-      _lasersPresent--;
-    }
-  }
+  drawLasers();
 
   _lastPress = shootbtn;
 
@@ -140,14 +112,63 @@ void drawBug(int x, int y) {
 }
 
 /**
- * Draws the laserblast at the given coordinate.
- * The coordinate defines the bottom of the blast.
+ * Calculates the drawing of all lasers,
+ * checking positions and redrawing.
 */
-void newLaser(int x, int y) {\
-  _lasersPresent++;
+void drawLasers() {
+  // calculate new positions, redraw laser
+  for (int i = 0; i < MAX_LASERS; i++) {
+    // check if current laser is now above the screen
+    if (_laser[i][1] < 0) {
+      // mark it as removed
+      Serial.print("removed laser ");
+      Serial.println(i);
+      _laser[i][0] = 0;
+      _laser[i][1] = LASER_REMOVED_MARKER;
+    }
 
-  // set position
-  // TODO: fix _lasersPresent indexing of lasers
-  _laser[_lasersPresent-1][0] = x;
-  _laser[_lasersPresent-1][1] = y;
+    if (_laser[i][1] == LASER_REMOVED_MARKER) {
+      continue;
+    }
+
+    _laser[i][1] -= LASER_SPEED;
+    Serial.print("current laser's y: ");
+    Serial.println(_laser[i][1]);
+
+    _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
+  }
+}
+
+/**
+ * Returns the index of a free laser slot.
+ * returns LASER_REMOVED_MARKER if no slots are available;
+*/
+int findOpenLaserSlot() {
+  for (int i = 0; i < MAX_LASERS; i++) {
+    if (_laser[i][1] == LASER_REMOVED_MARKER) {
+      Serial.print("found new laser slot at ");
+      Serial.println(i);
+      return i;
+    }
+  }
+  return LASER_REMOVED_MARKER;
+}
+
+/**
+ * Establishes the laser at the given coordinate.
+ * The coordinate defines the bottom of the blast.
+ * Returns 0 on success: the laser is established
+ *         1 on failure.
+*/
+int newLaser(int x, int y) {
+  int newLaserIndex = findOpenLaserSlot();
+  if (newLaserIndex != LASER_REMOVED_MARKER) {
+    Serial.print("new laser at index ");
+    Serial.println(newLaserIndex);
+    // set position
+    _laser[newLaserIndex][0] = x;
+    _laser[newLaserIndex][1] = y;
+    return 0;
+  }
+  return 1;
 }
