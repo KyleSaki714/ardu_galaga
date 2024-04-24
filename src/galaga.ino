@@ -20,27 +20,38 @@
 #define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+
+// PINS
 // const int JOYSTICK_UPDOWN_PIN = A1;
 // const int JOYSTICK_LEFTRIGHT_PIN = A0;
-
 const int BLASTER_PIN = 8;
 const int POT_PIN = A0;
-
 int _lastPress = HIGH;
 
+// SIZES AND POSITIONS
 const int GAME_FIELD_WIDTH = 86;
 // const int SHIP_Y_POS = 59; // Horizontal
 const int SHIP_Y_POS = 122; // Vertical
+const int SHIP_WIDTH = 7;
+const int SHIP_HEIGHT = 6;
+const int BEE_WIDTH_AND_HEIGHT = 5;
+const int BOSSGALAGA_WIDTH = 6;
+const int BOSSGALAGA_HEIGHT = 6;
 const int LASER_WIDTH = 1;
-const int LASER_HEIGHT = 2;
+const int LASER_HEIGHT = 3;
 
+// LASERS
 const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
 const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 const int LASER_SPEED = 2; // default is 8?
 int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
 
+Rectangle _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+int _beeMovie = 0;
+
 void setup() {
   Serial.begin(9600);
+  pinMode(BLASTER_PIN, INPUT_PULLUP);
 
   delay(3000);
 
@@ -62,16 +73,25 @@ void setup() {
   // Clear the buffer
   _display.clearDisplay();
 
+  _bee.setLocation(32, 32);
+
   for (int i = 0; i < MAX_LASERS; i++) {
     _laser[i][0] = 0;
     _laser[i][1] = LASER_REMOVED_MARKER;
   }
 
-  pinMode(BLASTER_PIN, INPUT_PULLUP);
 }
 
 void loop() {
   _display.clearDisplay();
+
+
+  _beeMovie = (_beeMovie + 1) % 360;
+  float radian = (_beeMovie * 71) / 4068;
+  Serial.println(radian);
+  _bee.setX(_bee.getX() + (sin(radian)));
+  // bool isColliding = _bee.overlaps()
+  _bee.draw(_display);
 
   int moveInput = analogRead(POT_PIN);
   // Serial.println(moveInput);
@@ -79,15 +99,13 @@ void loop() {
   // Serial.println(shipPosx);
   drawShip(shipPosx, SHIP_Y_POS);
 
-  for (int i = 3; i < 9; i++) {
-    drawBug((i * 2) + i, 3);
-  }
+  // for (int i = 3; i < 9; i++) {
+  //   drawBug((i * 2) + i, 3);
+  // }
 
   int shootbtn = digitalRead(BLASTER_PIN);
   if (shootbtn != _lastPress && shootbtn == LOW) {
     // draw new laser at the ship
-    Serial.print("new laser at ");
-    Serial.println(shipPosx);
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
@@ -125,8 +143,6 @@ void drawLasers() {
     // check if current laser is now above the screen
     if (_laser[i][1] < 0) {
       // mark it as removed
-      Serial.print("removed laser ");
-      Serial.println(i);
       _laser[i][0] = 0;
       _laser[i][1] = LASER_REMOVED_MARKER;
     }
@@ -136,8 +152,6 @@ void drawLasers() {
     }
 
     _laser[i][1] -= LASER_SPEED;
-    Serial.print("current laser's y: ");
-    Serial.println(_laser[i][1]);
 
     _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
   }
@@ -150,8 +164,6 @@ void drawLasers() {
 int findOpenLaserSlot() {
   for (int i = 0; i < MAX_LASERS; i++) {
     if (_laser[i][1] == LASER_REMOVED_MARKER) {
-      Serial.print("found new laser slot at ");
-      Serial.println(i);
       return i;
     }
   }
@@ -167,8 +179,6 @@ int findOpenLaserSlot() {
 int newLaser(int x, int y) {
   int newLaserIndex = findOpenLaserSlot();
   if (newLaserIndex != LASER_REMOVED_MARKER) {
-    Serial.print("new laser at index ");
-    Serial.println(newLaserIndex);
     // set position
     _laser[newLaserIndex][0] = x;
     _laser[newLaserIndex][1] = y;
