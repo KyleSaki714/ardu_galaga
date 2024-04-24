@@ -29,7 +29,8 @@ const int POT_PIN = A0;
 int _lastPress = HIGH;
 
 const int GAME_FIELD_WIDTH = 86;
-const int SHIP_Y_POS = 59;
+// const int SHIP_Y_POS = 59; // Horizontal
+const int SHIP_Y_POS = 122; // Vertical
 const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 2;
 
@@ -49,8 +50,12 @@ void setup() {
     for(;;); // Don't proceed, loop forever
   }
 
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
+  _display.clearDisplay();
+  _display.setRotation(1);
+  _display.setTextSize(1);
+  _display.setTextColor(WHITE);
+  _display.setCursor(0,0);
+  _display.println("Galaga!!!!");
   _display.display();
   delay(2000); // Pause for 2 seconds
 
@@ -77,7 +82,6 @@ void loop() {
   for (int i = 3; i < 9; i++) {
     drawBug((i * 2) + i, 3);
   }
-
 
   int shootbtn = digitalRead(BLASTER_PIN);
   if (shootbtn != _lastPress && shootbtn == LOW) {
