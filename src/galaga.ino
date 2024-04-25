@@ -15,6 +15,33 @@
 #define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// BITMAPS
+// 'ship', 7x6px
+const unsigned char epd_bitmap_ship [] PROGMEM = {
+	0x10, 0x10, 0x54, 0x38, 0xba, 0xd6
+};
+// 'bee', 5x5px
+const unsigned char epd_bitmap_bee [] PROGMEM = {
+	0xa8, 0x70, 0x20, 0xf8, 0xd8
+};
+// 'boss_galaga_close', 6x7px
+const unsigned char epd_bitmap_boss_galaga_close [] PROGMEM = {
+	0x78, 0x30, 0x78, 0xb4, 0x84, 0x48, 0x30
+};
+// 'boss_galaga_open', 6x7px
+const unsigned char epd_bitmap_boss_galaga_open [] PROGMEM = {
+	0x78, 0x30, 0x78, 0x78, 0xcc, 0x84, 0x84
+};
+
+// Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 128)
+const int epd_bitmap_allArray_LEN = 4;
+const unsigned char* epd_bitmap_allArray[4] = {
+	epd_bitmap_bee,
+	epd_bitmap_boss_galaga_close,
+	epd_bitmap_boss_galaga_open,
+	epd_bitmap_ship
+};
+
 
 // PINS
 // const int JOYSTICK_UPDOWN_PIN = A1;
@@ -49,7 +76,7 @@ Ship _ship(_display.width() / 2, 111, 7, 6);
 Laser **_laser;
 bool _laserActive[MAX_LASERS];
 
-Rectangle _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+Actor _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
 int _beeMovie = 0;
 
 void setup() {
@@ -70,6 +97,7 @@ void setup() {
   _display.setTextColor(WHITE);
   _display.setCursor(0,0);
   _display.println("Galaga!!!!");
+  _display.drawBitmap(30, 30, epd_bitmap_ship, 7, 6, WHITE);
   _display.display();
   delay(2000); // Pause for 2 seconds
 
@@ -77,15 +105,19 @@ void setup() {
   _display.clearDisplay();
 
   // initialize Shapes
+  _bee.setSprite(epd_bitmap_bee);
+  _bee.setDrawBoundingBox(false);
   _bee.setLocation(32, 32);
+  _ship.setSprite(epd_bitmap_ship);
+  _ship.setDrawBoundingBox(false);
 
-  // lasers
+  // initialize lasers
   _laser = new Laser*[MAX_LASERS];
   for (int i = 0; i < MAX_LASERS; i++) {
     _laserActive[i] = false;
-
     _laser[i] = new Laser(_display.width() / 2, _display.height() / 2, LASER_WIDTH, LASER_HEIGHT);
-
+    _laser[i]->setDrawBoundingBox(true);
+    _laser[i]->setDrawSprite(false);
   }
 
 }
@@ -93,18 +125,16 @@ void setup() {
 void loop() {
   _display.clearDisplay();
 
-
-  _beeMovie = (_beeMovie + 1) % 360;
+  _beeMovie = (_beeMovie + 30) % 360;
   float radian = (_beeMovie * M_PI) / 180;
   // Serial.println(radian);
-  _bee.setX(_bee.getX() + (sin(radian)));
+  _bee.setX((_display.width() / 2) + (sin(radian) * 2));
   // bool isColliding = _bee.overlaps()
   _bee.draw(_display);
 
   int moveInput = analogRead(POT_PIN);
-  // Serial.println(moveInput);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
-  // Serial.println(shipPosx);
+
   // constrain ship movement
   if (shipPosx < SHIP_MOVE_MARGIN) {
     shipPosx = SHIP_MOVE_MARGIN;
@@ -114,17 +144,10 @@ void loop() {
   }
   _ship.setLocation(shipPosx, SHIP_Y_POS);
   _ship.forceInside(0, 110, 64 + SHIP_MOVE_MARGIN, 8);
-  _ship.setDrawBoundingBox(true);
   _ship.draw(_display);
-  // drawShip(shipPosx, SHIP_Y_POS);
-
-  // for (int i = 3; i < 9; i++) {
-  //   drawBug((i * 2) + i, 3);
-  // }
 
   int shootbtn = digitalRead(BLASTER_PIN);
   if (shootbtn != _lastPress && shootbtn == LOW) {
-    // draw new laser at the ship
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
@@ -134,14 +157,6 @@ void loop() {
 
   _display.display();
   delay(10);
-}
-
-/**
- * Draws the ship at the given coordinate.
- * The coordinate defines the top middle of the ship.
-*/
-void drawShip(int x, int y) {
-  _display.fillTriangle(x, y, x-2, y+5, x+2, y+5, WHITE);
 }
 
 /**
@@ -171,22 +186,8 @@ void drawLasers() {
       continue;
     }
     int newY = currentLaser->getY() - LASER_SPEED;
-    // currentLaser.setLocation(currentLaser.getX(), newY);
-    Serial.print("new y ");
-    Serial.println(newY);
     currentLaser->setY(newY);
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.print("current laser at ");
-    Serial.print(currentLaser->getX());
-    Serial.print(", ");
-    Serial.println(currentLaser->getY());
-    // Serial.print("new y: ");
-    // Serial.println(newY);
-    // currentLaser.setY(newY);
-    // Serial.print("bruh: ");
     currentLaser->draw(_display);
-    // Serial.println(currentLaser.getY());
   }
 }
 
@@ -212,16 +213,9 @@ int findOpenLaserSlot() {
 int newLaser(int x, int y) {
   int newLaserIndex = findOpenLaserSlot();
   if (newLaserIndex != -1) {
-    // set position
     Laser *pew = (_laser[newLaserIndex]);
     pew->setLocation(x, y);
     _laserActive[newLaserIndex] = true;
-    Serial.print(newLaserIndex);
-    Serial.print(" ");
-    Serial.print("new laser at ");
-    Serial.print(pew->getX());
-    Serial.print(", ");
-    Serial.println(pew->getY());
     return 0;
   }
   return 1;
