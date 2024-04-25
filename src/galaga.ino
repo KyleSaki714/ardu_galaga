@@ -4,12 +4,7 @@
  */
 
 #include <Wire.h>
-#include <SPI.h>
-#include <Shape.hpp>;
-#include <ParallaxJoystick.hpp>;
-
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <graphics.ino>
 
 #define SCREEN_WIDTH 128 // OLED _display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED _display height, in pixels
@@ -29,9 +24,12 @@ const int POT_PIN = A0;
 int _lastPress = HIGH;
 
 // SIZES AND POSITIONS
-const int GAME_FIELD_WIDTH = 86;
+// const int GAME_FIELD_WIDTH = 86;
+const int GAME_FIELD_WIDTH = _display.width();
 // const int SHIP_Y_POS = 59; // Horizontal
-const int SHIP_Y_POS = 122; // Vertical
+// const int SHIP_Y_POS = 122; // Vertical
+const int SHIP_Y_POS = 111; // Vertical
+const int SHIP_MOVE_MARGIN = 3;
 const int SHIP_WIDTH = 7;
 const int SHIP_HEIGHT = 6;
 const int BEE_WIDTH_AND_HEIGHT = 5;
@@ -41,10 +39,15 @@ const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 3;
 
 // LASERS
-const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
-const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
+const int MAX_LASERS = 8; // max amount of lasers on the field at a time (default 2)
+// const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 const int LASER_SPEED = 2; // default is 8?
-int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
+// int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
+
+Ship _ship(_display.width() / 2, 111, 7, 6);
+
+Laser **_laser;
+bool _laserActive[MAX_LASERS];
 
 Rectangle _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
 int _beeMovie = 0;
@@ -73,11 +76,16 @@ void setup() {
   // Clear the buffer
   _display.clearDisplay();
 
+  // initialize Shapes
   _bee.setLocation(32, 32);
 
+  // lasers
+  _laser = new Laser*[MAX_LASERS];
   for (int i = 0; i < MAX_LASERS; i++) {
-    _laser[i][0] = 0;
-    _laser[i][1] = LASER_REMOVED_MARKER;
+    _laserActive[i] = false;
+
+    _laser[i] = new Laser(_display.width() / 2, _display.height() / 2, LASER_WIDTH, LASER_HEIGHT);
+
   }
 
 }
@@ -87,8 +95,8 @@ void loop() {
 
 
   _beeMovie = (_beeMovie + 1) % 360;
-  float radian = (_beeMovie * 71) / 4068;
-  Serial.println(radian);
+  float radian = (_beeMovie * M_PI) / 180;
+  // Serial.println(radian);
   _bee.setX(_bee.getX() + (sin(radian)));
   // bool isColliding = _bee.overlaps()
   _bee.draw(_display);
@@ -97,7 +105,18 @@ void loop() {
   // Serial.println(moveInput);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
   // Serial.println(shipPosx);
-  drawShip(shipPosx, SHIP_Y_POS);
+  // constrain ship movement
+  if (shipPosx < SHIP_MOVE_MARGIN) {
+    shipPosx = SHIP_MOVE_MARGIN;
+  }
+  if (shipPosx > _display.width() - SHIP_MOVE_MARGIN) {
+    shipPosx = _display.width() - SHIP_MOVE_MARGIN;
+  }
+  _ship.setLocation(shipPosx, SHIP_Y_POS);
+  _ship.forceInside(0, 110, 64 + SHIP_MOVE_MARGIN, 8);
+  _ship.setDrawBoundingBox(true);
+  _ship.draw(_display);
+  // drawShip(shipPosx, SHIP_Y_POS);
 
   // for (int i = 3; i < 9; i++) {
   //   drawBug((i * 2) + i, 3);
@@ -140,34 +159,48 @@ void drawBug(int x, int y) {
 void drawLasers() {
   // calculate new positions, redraw laser
   for (int i = 0; i < MAX_LASERS; i++) {
+    Laser *currentLaser = _laser[i];
+
     // check if current laser is now above the screen
-    if (_laser[i][1] < 0) {
+    if (currentLaser->getY() < 0) {
       // mark it as removed
-      _laser[i][0] = 0;
-      _laser[i][1] = LASER_REMOVED_MARKER;
+      _laserActive[i] = false;
     }
 
-    if (_laser[i][1] == LASER_REMOVED_MARKER) {
+    if (_laserActive[i] == false) {
       continue;
     }
-
-    _laser[i][1] -= LASER_SPEED;
-
-    _display.fillRect(_laser[i][0], _laser[i][1], LASER_WIDTH, LASER_HEIGHT, WHITE);
+    int newY = currentLaser->getY() - LASER_SPEED;
+    // currentLaser.setLocation(currentLaser.getX(), newY);
+    Serial.print("new y ");
+    Serial.println(newY);
+    currentLaser->setY(newY);
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.print("current laser at ");
+    Serial.print(currentLaser->getX());
+    Serial.print(", ");
+    Serial.println(currentLaser->getY());
+    // Serial.print("new y: ");
+    // Serial.println(newY);
+    // currentLaser.setY(newY);
+    // Serial.print("bruh: ");
+    currentLaser->draw(_display);
+    // Serial.println(currentLaser.getY());
   }
 }
 
 /**
  * Returns the index of a free laser slot.
- * returns LASER_REMOVED_MARKER if no slots are available;
+ * returns -1 if no slots are available;
 */
 int findOpenLaserSlot() {
   for (int i = 0; i < MAX_LASERS; i++) {
-    if (_laser[i][1] == LASER_REMOVED_MARKER) {
+    if (_laserActive[i] == false) {
       return i;
     }
   }
-  return LASER_REMOVED_MARKER;
+  return -1;
 }
 
 /**
@@ -178,10 +211,17 @@ int findOpenLaserSlot() {
 */
 int newLaser(int x, int y) {
   int newLaserIndex = findOpenLaserSlot();
-  if (newLaserIndex != LASER_REMOVED_MARKER) {
+  if (newLaserIndex != -1) {
     // set position
-    _laser[newLaserIndex][0] = x;
-    _laser[newLaserIndex][1] = y;
+    Laser *pew = (_laser[newLaserIndex]);
+    pew->setLocation(x, y);
+    _laserActive[newLaserIndex] = true;
+    Serial.print(newLaserIndex);
+    Serial.print(" ");
+    Serial.print("new laser at ");
+    Serial.print(pew->getX());
+    Serial.print(", ");
+    Serial.println(pew->getY());
     return 0;
   }
   return 1;
