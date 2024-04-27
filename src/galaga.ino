@@ -4,7 +4,7 @@
  */
 
 #include <Wire.h>
-#include <graphics.ino>
+#include <logic.ino>
 #include <Fonts/Picopixel.h>
 
 #define SCREEN_WIDTH 128 // OLED _display width, in pixels
@@ -45,7 +45,6 @@ const unsigned char epd_bitmap_explode2 [] PROGMEM = {
 const unsigned char epd_bitmap_explode3 [] PROGMEM = {
 	0x22, 0x84, 0x00, 0x46, 0x00, 0x42, 0x88
 };
-
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 128)
 const int epd_bitmap_allArray_LEN = 7;
@@ -99,7 +98,11 @@ Ship _ship(_display.width() / 2, 111, 7, 6);
 
 Laser **_laser;
 
-Bee _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+const int MAX_BEES = 5;
+Bee **_bee;
+const int FORMATION_POS_X[32];
+const int FORMATION_POS_Y[32];
+
 int _beeMovie = 0;
 
 void setup() {
@@ -130,12 +133,27 @@ void setup() {
   // Clear the buffer
   _display.clearDisplay();
 
-  // initialize Shapes
-  _bee.setSprite(epd_bitmap_bee);
-  _bee.setDrawBoundingBox(false);
-  _bee.setLocation(32, 32);
+  // initialize Ship
   _ship.setSprite(epd_bitmap_ship);
   _ship.setDrawBoundingBox(false);
+  _ship.setDrawCenterW(true);
+
+  int FORMATION_X_START = 2;
+  int FORMATION_X_END = 57;
+  int FORMATION_Y_START = 35;
+  int FORMATION_Y_END = 53;
+
+  // initialize Bees
+  int beex = FORMATION_X_START;
+  int beey = FORMATION_Y_START;
+  _bee = new Bee*[MAX_BEES];
+  for (int i = 0; i < MAX_BEES; i++) {
+    _bee[i] = new Bee(beex, beey, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+    _bee[i]->setSprite(epd_bitmap_bee);
+    _bee[i]->setDrawBoundingBox(false);
+    beex = beex + 8;
+    beey = beey + 6;
+  }
 
   // initialize lasers
   _laser = new Laser*[MAX_LASERS];
@@ -219,20 +237,27 @@ void updateScore(String enemyName) {
 void checkCollisions() {
   for (int i = 0; i < MAX_LASERS; i++) {
     Laser *currentLaser = _laser[i];
-    bool hit = !_bee.isHidden() && currentLaser->overlaps(_bee);
-    if (hit) {
-      _bee.hide();
-      removeLaser(i);
-      updateScore(_bee.getName());
+    // TODO loop through galagas too
+    for (int j = 0; j < MAX_BEES; j++) {
+      Bee *currentBee = _bee[j];
+      bool hit = !currentBee->isHidden() && currentLaser->overlaps(*currentBee);
+      if (hit) {
+        currentBee->hide();
+        removeLaser(i);
+        updateScore(currentBee->getName());
+      }
     }
   }
 }
 
 void drawEnemies() {
-  _beeMovie = (_beeMovie + 20) % 360;
+  _beeMovie = (_beeMovie + 10) % 360;
   float radian = (_beeMovie * M_PI) / 180;
-  _bee.setX((_display.width() / 2) + (sin(radian) * 2));
-  _bee.draw(_display);
+  for (int j = 0; j < MAX_BEES; j++) {
+    Bee *currentBee = _bee[j];
+    currentBee->setX(currentBee->getX() + (sin(radian) * 1.1));
+    currentBee->draw(_display);
+  }
 }
 
 /**

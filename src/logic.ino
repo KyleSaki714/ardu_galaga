@@ -11,6 +11,7 @@ class Actor : public Rectangle {
     bool _drawSprite;
     const unsigned char* _spriteExplode; // sprite byte array
     bool _hidden; // actor is DED
+    bool _drawCenterW; // draw the sprite from the center width of its BB (default top left)
 
   public:
     Actor(int x, int y, int width, int height) : Rectangle(x, y , width, height)
@@ -20,6 +21,7 @@ class Actor : public Rectangle {
       _drawSprite = true;
       _drawBoundingBox = false;
       _hidden = false;
+      _drawCenterW = false;
     }
 
     void setSprite(const unsigned char* byteArray) {
@@ -30,12 +32,18 @@ class Actor : public Rectangle {
       _drawSprite = drawSprite;
     }
 
+    void setDrawCenterW(bool drawCenterw) {
+      _drawCenterW = drawCenterw;
+    }
+
     void draw( Adafruit_SSD1306& display) {
+      int centerWidthOffset = _drawCenterW ? _centerw : 0;
+
       if (_drawBoundingBox) {
-        display.drawRect(_x - _centerw, _y, _width, _height, SSD1306_WHITE);
+        display.drawRect(_x - centerWidthOffset, _y, _width, _height, SSD1306_WHITE);
       }
       if (!_hidden && _drawSprite) {
-        display.drawBitmap(_x - _centerw, _y, _sprite, _width, _height, SSD1306_WHITE);
+        display.drawBitmap(_x - centerWidthOffset, _y, _sprite, _width, _height, SSD1306_WHITE);
       }
     }
 
