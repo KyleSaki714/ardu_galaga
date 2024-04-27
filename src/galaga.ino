@@ -2,7 +2,7 @@
  * Kyle Santos
  * Galaga game
  */
-
+#include <SPI.h>
 #include <Wire.h>
 #include <logic.ino>
 #include <Fonts/Picopixel.h>
@@ -13,7 +13,7 @@
 #define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 
 // Declaration for an SSD1306 _display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // BITMAPS
@@ -66,7 +66,7 @@ const String SCORE = "Score: ";
 // PINS
 // const int JOYSTICK_UPDOWN_PIN = A1;
 // const int JOYSTICK_LEFTRIGHT_PIN = A0;
-const int BLASTER_PIN = 8;
+const int BLASTER_PIN = 9;
 const int POT_PIN = A0;
 int _lastPress = HIGH;
 
@@ -86,9 +86,9 @@ const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 3;
 
 // LASERS
-const int MAX_LASERS = 8; // max amount of lasers on the field at a time (default 2)
+const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
 // const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
-const int LASER_SPEED = 2; // default is 8?
+const int LASER_SPEED = 6; // default is 8?
 // int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
 
 // GLOBALS
@@ -98,10 +98,10 @@ Ship _ship(_display.width() / 2, 111, 7, 6);
 
 Laser **_laser;
 
-const int MAX_BEES = 5;
+const int MAX_BEES = 32;
 Bee **_bee;
-const int FORMATION_POS_X[32];
-const int FORMATION_POS_Y[32];
+// bool _formationPositions_bees[MAX_BEES];
+// int formationPositions_galaga[4];
 
 int _beeMovie = 0;
 
@@ -116,6 +116,7 @@ void setup() {
     Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
+  Serial.println("qwer");
 
   // IMPORTANT DISPLAY STUFF
   _display.clearDisplay();
@@ -129,6 +130,7 @@ void setup() {
   _display.drawBitmap(30, 30, epd_bitmap_ship, 7, 6, WHITE);
   _display.display();
   delay(2000); // Pause for 2 seconds
+  Serial.println("asdf");
 
   // Clear the buffer
   _display.clearDisplay();
@@ -147,13 +149,37 @@ void setup() {
   int beex = FORMATION_X_START;
   int beey = FORMATION_Y_START;
   _bee = new Bee*[MAX_BEES];
-  for (int i = 0; i < MAX_BEES; i++) {
+  // int formationPos = 0;
+  Serial.println("initializing bees");
+  for (int i = 0; i <= MAX_BEES; i++) {
     _bee[i] = new Bee(beex, beey, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+    // formationPos++;
+    Serial.print("new bee (");
+    Serial.print(i);
+    Serial.print(") at");
+    Serial.print(beex);
+    Serial.print(", ");
+    Serial.print(beey);
+    Serial.println(".");
     _bee[i]->setSprite(epd_bitmap_bee);
     _bee[i]->setDrawBoundingBox(false);
-    beex = beex + 8;
-    beey = beey + 6;
+
+    // if (formationPos == 5 || formationPos == 11 || formationPos == 19) {
+    //   beex = FORMATION_X_START;
+    //   beey = beey + 6;
+    // } else {
+    //   beex = beex + 8;
+    // }
+
+    if (i != 0 && i % 8 == 0) {
+      beex = FORMATION_X_START;
+      beey = beey + 6;
+    } else {
+      // formationPos++;
+      beex = beex + 8;
+    }
   }
+  Serial.println("bees drawn");
 
   // initialize lasers
   _laser = new Laser*[MAX_LASERS];
@@ -255,7 +281,7 @@ void drawEnemies() {
   float radian = (_beeMovie * M_PI) / 180;
   for (int j = 0; j < MAX_BEES; j++) {
     Bee *currentBee = _bee[j];
-    currentBee->setX(currentBee->getX() + (sin(radian) * 1.1));
+    currentBee->setX(currentBee->getStartPositionX() + (sin(radian) * 1.1));
     currentBee->draw(_display);
   }
 }

@@ -99,13 +99,27 @@ class Ship : public Actor {
 };
 
 class Enemy : public Actor {
+  private:
+    int _startPosx;
+    int _startPosy;
+
   public:
     Enemy(int x, int y, int width, int height) : Actor(x, y , width, height)
     {
+      _startPosx = x;
+      _startPosy = y;
     }
 
     String getName() const override{
       return "Enemy";
+    }
+
+    int getStartPositionX() {
+      return _startPosx;
+    }
+
+    int getStartPositionY() {
+      return _startPosy;
     }
 };
 
