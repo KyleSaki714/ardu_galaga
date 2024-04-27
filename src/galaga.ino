@@ -59,6 +59,10 @@ const unsigned char* epd_bitmap_allArray[epd_bitmap_allArray_LEN] = {
 	epd_bitmap_explode3
 };
 
+// ENEMIES
+const String BEE = "Bee";
+const String BOSSGALAGA = "BossGalaga";
+const String SCORE = "Score: ";
 
 // PINS
 // const int JOYSTICK_UPDOWN_PIN = A1;
@@ -94,9 +98,8 @@ int _points = 0;
 Ship _ship(_display.width() / 2, 111, 7, 6);
 
 Laser **_laser;
-bool _laserActive[MAX_LASERS];
 
-Actor _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
+Bee _bee(32, 32, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
 int _beeMovie = 0;
 
 void setup() {
@@ -131,15 +134,14 @@ void setup() {
   _bee.setSprite(epd_bitmap_bee);
   _bee.setDrawBoundingBox(false);
   _bee.setLocation(32, 32);
-  _bee.setExplodeSprites(epd_bitmap_allArray[6]);
   _ship.setSprite(epd_bitmap_ship);
   _ship.setDrawBoundingBox(false);
 
   // initialize lasers
   _laser = new Laser*[MAX_LASERS];
   for (int i = 0; i < MAX_LASERS; i++) {
-    _laserActive[i] = false;
-    _laser[i] = new Laser(_display.width() / 2, _display.height() / 2, LASER_WIDTH, LASER_HEIGHT);
+    _laser[i] = new Laser(-OFFSCREEN_COORDS, -OFFSCREEN_COORDS, LASER_WIDTH, LASER_HEIGHT);
+    _laser[i]->hide();
     _laser[i]->setDrawBoundingBox(true);
     _laser[i]->setDrawSprite(false);
   }
@@ -152,7 +154,9 @@ void loop() {
 
   drawEnemies();
 
-  updateScore(_points);
+  checkCollisions();
+
+  drawScore();
 
   int moveInput = analogRead(POT_PIN);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
@@ -181,8 +185,16 @@ void loop() {
   delay(10);
 }
 
+void drawScore() {
+  _display.setCursor(0, 5);
+  _display.print(SCORE);
+  _display.print(_points);
+}
+
+/**
+ * Adds points to the total score.
+*/
 void updateScore(int points) {
-  String score = "Score: ";
   // int16_t x1, y1;
   // uint16_t w, h;
   // _display.getTextBounds(score, 0, 0, &x1, &y1, &w, &h);
@@ -190,27 +202,36 @@ void updateScore(int points) {
   // _display.print("High Score: ");
   // _display.println(420420);
   // _display.setCursor(0,8);
-  _display.setCursor(0, 5);
-  _display.print(score);
-  _display.print(points);
+  _points += points;
+}
+
+void updateScore(String enemyName) {
+  String name = enemyName;
+  Serial.print("Hit ");
+  Serial.println(name);
+  if (name == BEE) {
+    updateScore(50);
+  } else if (name == BOSSGALAGA) {
+    updateScore(150);
+  }
+}
+
+void checkCollisions() {
+  for (int i = 0; i < MAX_LASERS; i++) {
+    Laser *currentLaser = _laser[i];
+    bool hit = !_bee.isHidden() && currentLaser->overlaps(_bee);
+    if (hit) {
+      _bee.hide();
+      removeLaser(i);
+      updateScore(_bee.getName());
+    }
+  }
 }
 
 void drawEnemies() {
-  _beeMovie = (_beeMovie + 30) % 360;
+  _beeMovie = (_beeMovie + 20) % 360;
   float radian = (_beeMovie * M_PI) / 180;
-  // Serial.println(radian);
   _bee.setX((_display.width() / 2) + (sin(radian) * 2));
-  // bool isColliding = _bee.overlaps()
-
-  for (int i = 0; i < MAX_LASERS; i++) {
-    Laser *currentLaser = _laser[i];
-    bool hit = currentLaser->overlaps(_bee);
-    if (hit) {
-      _bee.explode();
-      // todo laser hit
-    }
-  }
-
   _bee.draw(_display);
 }
 
@@ -234,10 +255,10 @@ void drawLasers() {
     // check if current laser is now above the screen
     if (currentLaser->getY() < 0) {
       // mark it as removed
-      _laserActive[i] = false;
+      removeLaser(i);
     }
 
-    if (_laserActive[i] == false) {
+    if (currentLaser->isHidden()) {
       continue;
     }
     int newY = currentLaser->getY() - LASER_SPEED;
@@ -246,13 +267,19 @@ void drawLasers() {
   }
 }
 
+void removeLaser(int laserIndex) {
+  Laser *currentLaser = _laser[laserIndex];
+  currentLaser->hide();
+}
+
 /**
- * Returns the index of a free laser slot.
- * returns -1 if no slots are available;
+ * Finds an open laser to shoot. 
+ * Returns -1 if no lasers are available.
 */
-int findOpenLaserSlot() {
+int findOpenLaser() {
   for (int i = 0; i < MAX_LASERS; i++) {
-    if (_laserActive[i] == false) {
+    Laser *pew = (_laser[i]);
+    if (pew->isHidden()) {
       return i;
     }
   }
@@ -266,11 +293,13 @@ int findOpenLaserSlot() {
  *         1 on failure.
 */
 int newLaser(int x, int y) {
-  int newLaserIndex = findOpenLaserSlot();
+  int newLaserIndex = findOpenLaser();
+  Serial.print("Hi, this is Laser ");
+  Serial.println(newLaserIndex);
   if (newLaserIndex != -1) {
     Laser *pew = (_laser[newLaserIndex]);
     pew->setLocation(x, y);
-    _laserActive[newLaserIndex] = true;
+    pew->show();
     return 0;
   }
   return 1;
