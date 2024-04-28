@@ -1,5 +1,5 @@
-#ifndef BRUH_G
-#define BRUH_G
+#ifndef CLASSES
+#define CLASSES
 #include <Shape.hpp>
 
 const int OFFSCREEN_COORDS = 128;
@@ -102,12 +102,14 @@ class Enemy : public Actor {
   private:
     int _startPosx;
     int _startPosy;
+    bool _justHit; // if the enemy was just destroyed
 
   public:
     Enemy(int x, int y, int width, int height) : Actor(x, y , width, height)
     {
       _startPosx = x;
       _startPosy = y;
+      _justHit = false;
     }
 
     String getName() const override{
@@ -120,6 +122,24 @@ class Enemy : public Actor {
 
     int getStartPositionY() {
       return _startPosy;
+    }
+
+    bool wasJustHit() {
+      return _justHit;
+    }
+
+    /**
+     * This enemy was hit.
+    */
+    void hit() {
+      _justHit = true;
+    }
+
+    /**
+     * Enemy is not dead anymore
+    */
+    void recover() {
+      _justHit = false;
     }
 };
 
