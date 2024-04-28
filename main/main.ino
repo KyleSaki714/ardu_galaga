@@ -4,10 +4,9 @@
  */
 #include <SPI.h>
 #include <Wire.h>
-#include <graphics.ino>
-#include <gamelogic.ino>
-#include <audio.ino>
-
+// #include "graphics.h"
+#include "gamelogic.h"
+// #include <audio.ino>
 
 typedef enum {
   MENU,
@@ -156,4 +155,3 @@ void lose() {
 
 
 }
-

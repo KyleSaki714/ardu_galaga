@@ -1,24 +1,7 @@
-#ifndef LOGIC
-#define LOGIC
-
-#include <classes.ino>
-#include <graphics.ino>
-#include <audio.ino>
+#include "gamelogic.h"
 
 // const int GAME_FIELD_WIDTH = 86;
 const int GAME_FIELD_WIDTH = _display.width();
-
-// INPUT
-// const int JOYSTICK_UPDOWN_PIN = A1;
-// const int JOYSTICK_LEFTRIGHT_PIN = A0;
-const int BLASTER_PIN = 9;
-const int POT_PIN = A0;
-int _lastPress = HIGH;
-
-// ENEMIES
-const String BEE = "Bee";
-const String BOSSGALAGA = "BossGalaga";
-const String SCORE = "Score: ";
 
 // SIZES AND POSITIONS
 // const int SHIP_Y_POS = 59; // Horizontal
@@ -33,26 +16,8 @@ const int BOSSGALAGA_HEIGHT = 6;
 const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 3;
 
-// LASERS
-const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
 // const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 // int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
-
-// GLOBALS
-int _currentScore = 0;
-
-Ship* _ship;
-
-Laser **_laser;
-
-Bee **_bee;
-const int MAX_BEES = 32;
-// bool _formationPositions_bees[MAX_BEES];
-// int formationPositions_galaga[4];
-
-int _beeMovie = 0;
-
-bool _lostGame;
 
 /**
  * Called in setup.
@@ -124,7 +89,7 @@ void loseGame() {
 }
 
 /**
- * ADDS given score amount to the points total. 
+ * ADDS given score amount to the points total.
 */
 void updateScore(int newScore) {
   _currentScore += newScore;
@@ -162,7 +127,7 @@ void checkHits() {
 }
 
 /**
- * Finds an open laser to shoot. 
+ * Finds an open laser to shoot.
  * Returns -1 if no lasers are available.
 */
 int findOpenLaser() {
@@ -210,7 +175,7 @@ void randomDive() {
  * returns 1 if the game is lost.
 */
 int gameLoop() {
-  
+
   checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES, _ship);
   checkHits();
 
@@ -240,5 +205,3 @@ int gameLoop() {
 
   return _lostGame;
 }
-
-#endif
