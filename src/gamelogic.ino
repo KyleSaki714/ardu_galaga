@@ -34,7 +34,7 @@ const int LASER_WIDTH = 1;
 const int LASER_HEIGHT = 3;
 
 // LASERS
-const int MAX_LASERS = 10; // max amount of lasers on the field at a time (default 2)
+const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
 // const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 // int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
 
@@ -56,6 +56,9 @@ int _beeMovie = 0;
  * Called in setup.
 */
 void initializeActors() {
+
+  _currentScore = 0;
+
   Serial.println("Initializing Actors...");
   _ship = new Ship(0, 111, 7, 6);
 
