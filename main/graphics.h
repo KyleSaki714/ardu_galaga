@@ -13,7 +13,7 @@ const int LASER_SPEED = 6; // default is 8?
 
 // Declaration for an SSD1306 _display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+inline Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // BITMAPS
 // 'ship', 7x6px
@@ -46,8 +46,8 @@ const unsigned char epd_bitmap_explode3 [] PROGMEM = {
 };
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 128)
-const int epd_bitmap_allArray_LEN = 7;
-const unsigned char* epd_bitmap_allArray[epd_bitmap_allArray_LEN] = {
+inline const int epd_bitmap_allArray_LEN = 7;
+inline const unsigned char* epd_bitmap_allArray[epd_bitmap_allArray_LEN] = {
 	epd_bitmap_bee,
 	epd_bitmap_boss_galaga_close,
 	epd_bitmap_boss_galaga_open,

@@ -1,7 +1,7 @@
 #include "gamelogic.h"
 
 // const int GAME_FIELD_WIDTH = 86;
-const int GAME_FIELD_WIDTH = _display.width();
+// const int GAME_FIELD_WIDTH = _display.width();
 
 // SIZES AND POSITIONS
 // const int SHIP_Y_POS = 59; // Horizontal
@@ -182,7 +182,7 @@ int gameLoop() {
   randomDive();
 
   int moveInput = analogRead(POT_PIN);
-  int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
+  int shipPosx = (int) ((moveInput / (float) 1023) * 64); // TODO smooth this for no jittering
 
   // constrain ship movement
   if (shipPosx < SHIP_MOVE_MARGIN) {
