@@ -1,6 +1,7 @@
 #ifndef CLASSES
 #define CLASSES
 #include <Shape.hpp>
+#include <Fonts/Picopixel.h>
 
 const int OFFSCREEN_COORDS = 128;
 
@@ -12,6 +13,7 @@ class Actor : public Rectangle {
     const unsigned char* _spriteExplode; // sprite byte array
     bool _hidden; // actor is DED
     bool _drawCenterW; // draw the sprite from the center width of its BB (default top left)
+    bool _justHit; // if the Actor was just destroyed (collided with something else)
 
   public:
     Actor(int x, int y, int width, int height) : Rectangle(x, y , width, height)
@@ -59,6 +61,24 @@ class Actor : public Rectangle {
     void show() {
       _hidden = false;
     }
+    
+    bool wasJustHit() {
+      return _justHit;
+    }
+
+    /**
+     * This Actor was hit.
+    */
+    void hit() {
+      _justHit = true;
+    }
+
+    /**
+     * This actor is not dead anymore
+    */
+    void recover() {
+      _justHit = false;
+    }
 
     String getName() const override{
       return "Actor";
@@ -102,7 +122,7 @@ class Enemy : public Actor {
   private:
     int _startPosx;
     int _startPosy;
-    bool _justHit; // if the enemy was just destroyed
+    bool _isDiving;
 
   public:
     Enemy(int x, int y, int width, int height) : Actor(x, y , width, height)
@@ -110,6 +130,7 @@ class Enemy : public Actor {
       _startPosx = x;
       _startPosy = y;
       _justHit = false;
+      _isDiving = false;
     }
 
     String getName() const override{
@@ -124,22 +145,12 @@ class Enemy : public Actor {
       return _startPosy;
     }
 
-    bool wasJustHit() {
-      return _justHit;
+    bool isDiving() {
+      return _isDiving;
     }
 
-    /**
-     * This enemy was hit.
-    */
-    void hit() {
-      _justHit = true;
-    }
-
-    /**
-     * Enemy is not dead anymore
-    */
-    void recover() {
-      _justHit = false;
+    void setDive(bool isDiving) {
+      _isDiving = isDiving;
     }
 };
 

@@ -7,7 +7,7 @@
 #include <graphics.ino>
 #include <gamelogic.ino>
 #include <audio.ino>
-#include <Fonts/Picopixel.h>
+
 
 typedef enum {
   MENU,
@@ -37,6 +37,9 @@ void changeState(GAMESTATE newState) {
     delay(2000);
     break;
   case LOSE:
+    _display.println("Loading LOSE...");
+    _display.display();
+    delay(2000);
   default:
     break;
   }
@@ -109,6 +112,7 @@ void loop() {
 
 void menu() {
   Serial.println("menu");
+  _display.setCursor(0, 5);
   _display.println("Return of the Pelicans");
   _display.println("Press FIRE to start");
 
@@ -126,7 +130,11 @@ void game() {
 
   drawEnemies(_bee, MAX_BEES);
 
-  gameLoop();
+  int gameStatus = gameLoop();
+
+  if (gameStatus) {
+    changeState(LOSE);
+  }
 
   drawScore(SCORE, _currentScore);
 
@@ -135,6 +143,7 @@ void game() {
 
 void lose() {
   Serial.println("lose");
+  _display.setCursor(0, 5);
   _display.println("YOU LOST");
 
   _display.println("FINAL SCORE: ");

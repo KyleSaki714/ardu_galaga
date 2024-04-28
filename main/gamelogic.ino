@@ -52,15 +52,20 @@ const int MAX_BEES = 32;
 
 int _beeMovie = 0;
 
+bool _lostGame;
+
 /**
  * Called in setup.
 */
 void initializeActors() {
 
+  randomSeed(analogRead(5));
+  _lostGame = false;
   _currentScore = 0;
 
   Serial.println("Initializing Actors...");
   _ship = new Ship(0, 111, 7, 6);
+  _ship->recover();
 
     // initialize Ship
   _ship->setSprite(epd_bitmap_ship);
@@ -90,7 +95,7 @@ void initializeActors() {
     Serial.print(beey);
     Serial.println(".");
     _bee[i]->setSprite(epd_bitmap_bee);
-    _bee[i]->setDrawBoundingBox(false);
+    _bee[i]->setDrawBoundingBox(true);
 
     if (i != 0 && i % 8 == 0) {
       beex = FORMATION_X_START;
@@ -112,6 +117,10 @@ void initializeActors() {
     _laser[i]->setDrawSprite(false);
   }
   Serial.println(" Lasers done. Actors Initialized");
+}
+
+void loseGame() {
+  _lostGame = true;
 }
 
 /**
@@ -139,6 +148,10 @@ void updateScore(String enemyName) {
  * Checks the enemies after having been hit and updates points accordingly.
 */
 void checkHits() {
+  if (_ship->wasJustHit()) {
+    loseGame();
+  }
+
   for (int j = 0; j < MAX_BEES; j++) {
     Bee *currentBee = _bee[j];
     if (currentBee->wasJustHit()) {
@@ -179,10 +192,29 @@ void newLaser(int x, int y) {
   }
 }
 
-void gameLoop() {
+/**
+ * Selects one alive enemy to dive.
+*/
+void randomDive() {
+  long randLong = random(100);
+  if (randLong > 10) {
+    return;
+  }
+
+  randLong = random(MAX_BEES);
+  _bee[randLong]->setDive(true);
+}
+
+
+/**
+ * returns 1 if the game is lost.
+*/
+int gameLoop() {
   
-  checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES);
+  checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES, _ship);
   checkHits();
+
+  randomDive();
 
   int moveInput = analogRead(POT_PIN);
   int shipPosx = (int) ((moveInput / (float) 1023) * GAME_FIELD_WIDTH); // TODO smooth this for no jittering
@@ -204,6 +236,9 @@ void gameLoop() {
   }
 
   _lastPress = shootbtn;
+
+
+  return _lostGame;
 }
 
 #endif

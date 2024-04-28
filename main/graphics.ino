@@ -58,18 +58,30 @@ const unsigned char* epd_bitmap_allArray[epd_bitmap_allArray_LEN] = {
 	epd_bitmap_explode3
 };
 
-void checkCollisions(Laser** lasers, int maxLasers, Bee** bees, int maxBees) {
+void checkCollisions(Laser** lasers, int maxLasers, 
+                     Bee** bees, int maxBees, 
+                     Ship* ship) {
   for (int i = 0; i < maxLasers; i++) {
     Laser *currentLaser = lasers[i];
     // TODO loop through galagas too
     for (int j = 0; j < maxBees; j++) {
       Bee *currentBee = bees[j];
-      bool hit = !currentBee->isHidden() && currentLaser->overlaps(*currentBee);
-      if (hit) {
+      
+      // check laser collisions with bee
+      bool laserHit = !currentBee->isHidden() && currentLaser->overlaps(*currentBee);
+      if (laserHit) {
         // TODO this breaks contract
         currentBee->hide();
         currentBee->hit();
         currentLaser->hide();
+      }
+
+      // check ship collision with bee
+      bool shipHit = !currentBee->isHidden() && currentBee->overlaps(*ship);
+      if (shipHit) {
+        // lose life
+        ship->hit();
+        currentBee->hit();
       }
     }
   }
@@ -90,6 +102,13 @@ void drawEnemies(Bee** bees, int totalAmount) {
   for (int j = 0; j < totalAmount; j++) {
     Bee *currentBee = bees[j];
     // currentBee->setX(currentBee->getStartPositionX() + (sin(radian) * 1.1));
+    if (currentBee->isDiving()) {
+      currentBee->setY(currentBee->getY() + 2);
+      if (currentBee->getY() > _display.height()) {
+        currentBee->setLocation(currentBee->getStartPositionX(), currentBee->getStartPositionY());
+        currentBee->setDive(false);
+      }
+    }
     currentBee->draw(_display);
   }
 }
