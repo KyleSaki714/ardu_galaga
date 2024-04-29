@@ -38,18 +38,42 @@ void drawScore(const String scorePrefix, int points) {
   _display.print(points);
 }
 
-void drawEnemies(Bee** bees, int totalAmount) {
-//   _beeMovie = (_beeMovie + 10) % 360;
-//   float radian = (_beeMovie * M_PI) / 180;
+void drawEnemies(Bee** bees, int totalAmount, int beeWave) {
+  // beeWave = (beeWave + 10) % 360;
+  float radian = (beeWave * M_PI) / 180;
   for (int j = 0; j < totalAmount; j++) {
     Bee *currentBee = bees[j];
-    // currentBee->setX(currentBee->getStartPositionX() + (sin(radian) * 1.1));
     if (currentBee->isDiving()) {
-      currentBee->setY(currentBee->getY() + 2);
+      // fly towards ship
+      float t = currentBee->getT();
+      Serial.print("t: ");
+      Serial.println(t);
+      Serial.print("new x: ");
+      Serial.println((1.0 - t) * currentBee->getX() + t * currentBee->getDiveTargetX() * 1.5);
+      Serial.print("new y: ");
+      Serial.println((1.0 - t) * currentBee->getY() + t * currentBee->getDiveTargetY() * 1.5);
+      int newx = ceil((1.0 - t) * currentBee->getX() + t * currentBee->getDiveTargetX() * 1.5);
+      int newy = ceil((1.0 - t) * currentBee->getY() + t * currentBee->getDiveTargetY() * 1.5);
+      currentBee->incrementT();
+
+      currentBee->setLocation(newx, newy);
+      // currentBee->setY(currentBee->getY() + 2);
+
+      // if hit bottom, go back to top of screen 
       if (currentBee->getY() > _display.height()) {
-        currentBee->setLocation(currentBee->getStartPositionX(), currentBee->getStartPositionY());
-        currentBee->setDive(false);
+        currentBee->setLocation(currentBee->getStartPositionX(), 0);
       }
+
+      // if approaching initial position in formation, stop dive and return to formation
+      // if (currentBee->getY() > _display.height()) {
+      if (currentBee->getY() > currentBee->getStartPositionY() - 20 && 
+          currentBee->getY() < currentBee->getStartPositionY()) {
+        currentBee->setLocation(currentBee->getStartPositionX(), currentBee->getStartPositionY());
+        currentBee->stopDive();
+      }
+    } else {
+      // wave
+      currentBee->setX(currentBee->getStartPositionX() + (sin(radian) * 1.1));
     }
     currentBee->draw(_display);
   }

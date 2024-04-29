@@ -24,9 +24,9 @@ void changeState(GAMESTATE newState) {
   switch (newState)
   {
   case MENU:
-    _display.println("Loading Menu...");
-    _display.display();
-    delay(2000);
+    // _display.println("Loading Menu...");
+    // _display.display();
+    // delay(2000);
     break;
   case GAME:
     _display.println("Loading Game...");
@@ -36,8 +36,8 @@ void changeState(GAMESTATE newState) {
     delay(2000);
     break;
   case LOSE:
-    _display.println("Loading LOSE...");
-    _display.display();
+    // _display.println("Loading LOSE...");
+    // _display.display();
     delay(2000);
   default:
     break;
@@ -112,7 +112,7 @@ void loop() {
 void menu() {
   Serial.println("menu");
   _display.setCursor(0, 5);
-  _display.println("Return of the Pelicans");
+  _display.println("CAPY WARS");
   _display.println("Press FIRE to start");
 
 
@@ -125,9 +125,9 @@ void menu() {
 }
 
 void game() {
-  Serial.println("game");
+  // Serial.println("game");
 
-  drawEnemies(_bee, MAX_BEES);
+  drawEnemies(_bee, MAX_BEES, _beeMovie);
 
   int gameStatus = gameLoop();
 
@@ -138,6 +138,8 @@ void game() {
   drawScore(SCORE, _currentScore);
 
   drawLasers(_laser, MAX_LASERS);
+
+  _beeMovie = (_beeMovie + 10) % 360;
 }
 
 void lose() {

@@ -179,7 +179,7 @@ void randomEnemyDive() {
   randLong = random(MAX_BEES);
   Bee* b =_bee[randLong];
   if (!b->isHidden() && !b->isDiving() && (millis() - _lastDive) > DIVE_INTERVAL) {
-    _bee[randLong]->setDive(true);
+    _bee[randLong]->startDive(_ship->getX(), _ship->getY());
     audio->setEnemyDive();
     _lastDive = millis();
   }

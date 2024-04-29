@@ -98,6 +98,9 @@ Enemy::Enemy(int x, int y, int width, int height) : Actor(x, y , width, height)
   _startPosy = y;
   _justHit = false;
   _isDiving = false;
+  _t = 0.0;
+  _diveTargetx = 0;
+  _diveTargety = 0;
 }
 
 int Enemy::getStartPositionX() {
@@ -112,8 +115,34 @@ bool Enemy::isDiving() {
   return _isDiving;
 }
 
-void Enemy::setDive(bool isDiving) {
-  _isDiving = isDiving;
+void Enemy::startDive(int targetx, int targety) {
+  _isDiving = true;
+  _t = 0.0;
+  _diveTargetx = targetx;
+  _diveTargety = targety;
+}
+
+void Enemy::stopDive() {
+  _isDiving = false;
+  _t = 0.0;
+  _diveTargetx = 0;
+  _diveTargety = 0;
+}
+
+int Enemy::getDiveTargetX() {
+  return _diveTargetx;
+}
+
+int Enemy::getDiveTargetY() {
+  return _diveTargety;
+}
+
+float Enemy::getT() {
+  return _t;
+}
+
+void Enemy::incrementT() {
+  _t = _t + T_INTERPOLATION_SPEED;
 }
 
 String Enemy::getName() const {

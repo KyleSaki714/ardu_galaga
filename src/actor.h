@@ -6,6 +6,7 @@
 #include <Fonts/Picopixel.h>
 
 const int OFFSCREEN_COORDS = 128;
+const float T_INTERPOLATION_SPEED = 0.001;
 
 class Actor : public Rectangle {
   protected:
@@ -55,12 +56,21 @@ class Enemy : public Actor {
     int _startPosx;
     int _startPosy;
     bool _isDiving;
+    float _t; // interpolation factor
+    int _diveTargetx;
+    int _diveTargety;
+
   public:
     Enemy(int x, int y, int width, int height);
     int getStartPositionX();
     int getStartPositionY();
     bool isDiving();
-    void setDive(bool);
+    void startDive(int targetx, int targety);
+    void stopDive();
+    int getDiveTargetX();
+    int getDiveTargetY();
+    float getT();
+    void incrementT();
     String getName() const override;
 };
 
