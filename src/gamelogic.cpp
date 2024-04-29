@@ -36,6 +36,9 @@ void initializeActors() {
   randomSeed(analogRead(5));
   _lostGame = false;
   _currentScore = 0;
+  _enemiesKilledSinceLastPhase = 0;
+  _enemiesKilledTotal = 0;
+
 
   Serial.println("Initializing Actors...");
 
@@ -60,16 +63,16 @@ void initializeActors() {
   Serial.println("Initializing Bees...");
   for (int i = 0; i < MAX_BEES; i++) {
     _bee[i] = new Bee(beex, beey, BEE_WIDTH_AND_HEIGHT, BEE_WIDTH_AND_HEIGHT);
-    // formationPos++;
-    Serial.print("new bee (");
-    Serial.print(i);
-    Serial.print(") at ");
-    Serial.print(beex);
-    Serial.print(", ");
-    Serial.print(beey);
-    Serial.println(".");
-    _bee[i]->setSprite(epd_bitmap_bee);
-    _bee[i]->setDrawBoundingBox(false);
+  //   // formationPos++;
+  //   Serial.print("new bee (");
+  //   Serial.print(i);
+  //   Serial.print(") at ");
+  //   Serial.print(beex);
+  //   Serial.print(", ");
+  //   Serial.print(beey);
+  //   Serial.println(".");
+  //   _bee[i]->setSprite(epd_bitmap_bee);
+  //   _bee[i]->setDrawBoundingBox(false);
 
     if (i != 0 && i % 8 == 0) {
       beex = FORMATION_X_START;
@@ -79,6 +82,7 @@ void initializeActors() {
       beex = beex + 8;
     }
   }
+  initializeFormation(_bee, MAX_BEES);
   Serial.println(" Bees done");
 
   // initialize lasers
@@ -95,6 +99,11 @@ void initializeActors() {
 
 void loseGame() {
   _lostGame = true;
+}
+
+void updateKillCount() {
+  _enemiesKilledTotal++;
+  _enemiesKilledSinceLastPhase++;
 }
 
 /**
@@ -130,7 +139,7 @@ void checkHits() {
     Bee *currentBee = _bee[j];
     if (currentBee->wasJustHit()) {
       updateScore(BEE);
-      _enemiesKilled++;
+      updateKillCount();
       currentBee->recover();
     }
   }
@@ -198,7 +207,19 @@ int gameLoop() {
   checkHits();
 
   if (_currentEnemyRoutine == FORMATION) {
+    if (_enemiesKilledSinceLastPhase > 20) {
+      _currentEnemyRoutine = SCATTER;
+      _enemiesKilledSinceLastPhase = 0;
+      initializeScatter(_bee, MAX_BEES);
+    }
     randomEnemyDive();
+  } else if (_currentEnemyRoutine == SCATTER) {
+    if (_enemiesKilledSinceLastPhase > 50) {
+      _currentEnemyRoutine = FORMATION;
+      _enemiesKilledSinceLastPhase = 0;
+      initializeFormation(_bee, MAX_BEES);
+    }
+    
   }
 
   // move ship
@@ -226,7 +247,7 @@ int gameLoop() {
     Bee* b =_bee[randLong];
     b->recover();
     b->show();
-    b->setLocation(random(0, 55), random(0, 120));
+    b->setLocation(random(0, 64), random(0, 100));
   }
 
 

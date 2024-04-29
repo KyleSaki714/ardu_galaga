@@ -18,7 +18,7 @@
 
 enum GraphPrimitive{
   POINTS,
-  LINES
+  SCATTER
 };
 
 class ScrollingLineGraph{
@@ -40,7 +40,7 @@ class ScrollingLineGraph{
     int _bufferSize = -1;
 
     String _dataLabel = "";
-    GraphPrimitive _drawGraphPrimitive = LINES;
+    GraphPrimitive _drawGraphPrimitive = SCATTER;
 
     boolean _drawAxis = true;
     boolean _drawLegend = true;

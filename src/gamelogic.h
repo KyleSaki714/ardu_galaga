@@ -33,17 +33,19 @@ const int MAX_BEES = 24;
 inline int _beeMovie = 0;
 inline bool _lostGame;
 inline int _shotsFired = 0;
-inline int _enemiesKilled = 0;
+inline int _enemiesKilledTotal = 0;
+inline int _enemiesKilledSinceLastPhase = 0; // reset every phase
 
 typedef enum ENEMYROUTINE {
   FORMATION,
-  LINES
+  SCATTER
 } ENEMYROUTINE;
 
 inline ENEMYROUTINE _currentEnemyRoutine;
 
 void initializeActors();
 void loseGame();
+void updateKillCount();
 void updateScore(int);
 void updateScore(String);
 void checkHits();

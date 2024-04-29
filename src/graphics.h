@@ -60,10 +60,11 @@ inline const unsigned char* epd_bitmap_allArray[epd_bitmap_allArray_LEN] = {
 void checkCollisions(Laser** lasers, int maxLasers,
                      Bee** bees, int maxBees,
                      Ship* ship);
-
+void initializeFormation(Bee** bees, int totalBees);
+void initializeScatter(Bee** bees, int totalBees);
 void drawScore(const String scorePrefix, int points);
 void drawEnemiesFormation(Bee** bees, int totalAmount, int beeWave);
-void drawEnemiesLines(Bee** bees, int totalAmount, int beeWave);
+void drawEnemiesScatter(Bee** bees, int totalAmount, int beeWave);
 void drawLasers(Laser** lasers, int maxLasers);
 
 #endif

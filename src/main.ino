@@ -113,7 +113,7 @@ void loop() {
 void menu() {
   Serial.println("menu");
   _display.setCursor(0, 5);
-  _display.println("CAPY WARS");
+  _display.println("FLY SWATTER");
   _display.println("Press FIRE to start");
 
 
@@ -130,8 +130,10 @@ void game() {
 
   if (_currentEnemyRoutine == FORMATION) {
     drawEnemiesFormation(_bee, MAX_BEES, _beeMovie);
-  } else if (_currentEnemyRoutine == LINES) {
-    drawEnemiesLines(_bee, MAX_BEES, _beeMovie);
+    _display.println("FORMATION");
+  } else if (_currentEnemyRoutine == SCATTER) {
+    drawEnemiesScatter(_bee, MAX_BEES, _beeMovie);
+    _display.println("SCATTER");
   }
 
 
@@ -143,8 +145,8 @@ void game() {
 
   drawScore(SCORE, _currentScore);
 
-  _display.print("ded: ");
-  _display.println(_enemiesKilled);
+  _display.print(" p: ");
+  _display.println(_enemiesKilledTotal);
 
   drawLasers(_laser, MAX_LASERS);
 

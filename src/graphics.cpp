@@ -1,5 +1,10 @@
 #include "graphics.h"
 
+const int FORMATION_X_START = 2;
+const int FORMATION_X_END = 57;
+const int FORMATION_Y_START = 35;
+const int FORMATION_Y_END = 53;
+
 void checkCollisions(Laser** lasers, int maxLasers,
                      Bee** bees, int maxBees,
                      Ship* ship) {
@@ -36,6 +41,43 @@ void drawScore(const String scorePrefix, int points) {
   _display.setCursor(0, 5);
   _display.print(scorePrefix);
   _display.print(points);
+}
+
+void initializeFormation(Bee** bees, int totalBees) {
+  int beex = FORMATION_X_START;
+  int beey = FORMATION_Y_START;
+
+  for (int i = 0; i < totalBees; i++) {
+    Bee *currentBee = bees[i];
+    currentBee->setLocation(beex, beey);
+    currentBee->setSprite(epd_bitmap_bee);
+    currentBee->setDrawBoundingBox(false);
+    currentBee->show();
+    currentBee->recover();
+
+    if (i != 0 && i % 8 == 0) {
+      beex = FORMATION_X_START;
+      beey = beey + 6;
+    } else {
+      // formationPos++;
+      beex = beex + 8;
+    }
+  }
+}
+
+void initializeScatter(Bee** bees, int totalBees) {
+  int i = totalBees;
+  while ( i < totalBees) {
+    long randLong = random(totalBees);
+    Bee* bee = bees[randLong];
+    bee->recover();
+    bee->show();
+    bee->setLocation(random(0, 64), random(0, 80));
+    // give random initial t value
+    for (int j = 0; j < randLong; j++) {
+      bee->incrementT();
+    }
+  }
 }
 
 /**
@@ -83,12 +125,22 @@ void drawEnemiesFormation(Bee** bees, int totalAmount, int beeWave) {
   }
 }
 
-void drawEnemiesLines(Bee** bees, int totalAmount, int beeWave) {
+void drawEnemiesScatter(Bee** bees, int totalAmount, int beeWave) {
   for (int j = 0; j < totalAmount; j++) {
     Bee *currentBee = bees[j];
 
     // test
-    currentBee->setLocation(currentBee->getX() + 1, currentBee->getY() + 1);
+    // currentBee->setLocation(currentBee->getX() + 1, currentBee->getY() + 1);
+    // currentBee->setX((currentBee->getX() + 1) % _display.width());
+
+    int randumb = (random(0, 2) - 2) * -1;
+    currentBee->setX(currentBee->getX() + randumb);
+    randumb = (random(0, 2) - 2) * -1;
+    currentBee->setY(currentBee->getY() + randumb);
+    
+    // currentBee->setLocation(currentBee->getX() + randumb, currentBee->getY() + randumb);
+    currentBee->setLocation(currentBee->getX() % _display.width(), currentBee->getY() % _display.height());
+
 
     currentBee->draw(_display);
   }
