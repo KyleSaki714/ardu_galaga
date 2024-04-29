@@ -5,7 +5,9 @@
 
 const int NOTE_LEN = 50;
 const int BLASTER_LEN = 2;
-const int BLASTER[2] = {415, 261};
+const int BLASTER[BLASTER_LEN] = {415, 261};
+const int ENEMY_DIVE_LEN = 5;
+const int ENEMY_DIVE[ENEMY_DIVE_LEN] = {440, 440, 440, 392, 293};
 // const int BLASTER[2] = {NOTE_Gs, NOTE_C};
 
 class Audio {
@@ -47,6 +49,16 @@ class Audio {
       _currentToneIndex = 0;
       _currentTune = BLASTER;
       _currentTuneLen = BLASTER_LEN;
+    }
+
+    void setEnemyDive() {
+      if (_currentTune != nullptr) {
+        return;
+      }
+
+      _currentToneIndex = 0;
+      _currentTune = ENEMY_DIVE;
+      _currentTuneLen = ENEMY_DIVE_LEN;
     }
 
 };

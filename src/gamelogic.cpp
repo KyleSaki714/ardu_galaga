@@ -41,7 +41,7 @@ void initializeActors() {
   _ship = new Ship(0, 111, 7, 6);
   _ship->recover();
   _ship->setSprite(epd_bitmap_ship);
-  _ship->setDrawBoundingBox(true);
+  _ship->setDrawBoundingBox(false);
   _ship->setDrawCenterW(true);
 
   int FORMATION_X_START = 2;
@@ -168,7 +168,7 @@ void newLaser(int x, int y) {
 /**
  * Selects one alive enemy to dive.
 */
-void randomDive() {
+void randomEnemyDive() {
   // 3 / 100 chance per frame
   long randLong = random(100);
   if (randLong > 3) {
@@ -180,6 +180,7 @@ void randomDive() {
   Bee* b =_bee[randLong];
   if (!b->isHidden() && !b->isDiving() && (millis() - _lastDive) > DIVE_INTERVAL) {
     _bee[randLong]->setDive(true);
+    audio->setEnemyDive();
     _lastDive = millis();
   }
 }
@@ -193,7 +194,7 @@ int gameLoop() {
   checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES, _ship);
   checkHits();
 
-  randomDive();
+  randomEnemyDive();
 
   // move ship
   int moveInput = analogRead(POT_PIN);

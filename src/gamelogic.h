@@ -40,7 +40,7 @@ void updateScore(String);
 void checkHits();
 int findOpenLaser();
 void newLaser(int, int);
-void randomDive();
+void randomEnemyDive();
 int gameLoop();
 
 #endif
