@@ -4,6 +4,7 @@
 // #include "Arduino.h"
 // #include "actor.h"
 #include "graphics.h"
+#include "audio.hpp"
 
 // INPUT
 // TODO: make input class
@@ -26,7 +27,7 @@ inline int _currentScore = 0;
 inline Ship* _ship;
 inline Laser **_laser;
 inline Bee **_bee;
-const int MAX_BEES = 32;
+const int MAX_BEES = 24;
 // bool _formationPositions_bees[MAX_BEES];
 // int formationPositions_galaga[4];
 inline int _beeMovie = 0;

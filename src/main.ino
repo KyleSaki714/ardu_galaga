@@ -70,16 +70,16 @@ void setup() {
   _display.print("Getting ready");
   // _display.drawBitmap(30, 30, epd_bitmap_ship, 7, 6, WHITE);
   _display.display();
-  delay(500); // Pause for 2 seconds
+  delay(250); // Pause for 2 seconds
   _display.print(".");
   _display.display();
-  delay(500);
+  delay(250);
   _display.print(".");
   _display.display();
-  delay(500);
+  delay(250);
   _display.println(".");
   _display.display();
-  delay(1000);
+  delay(500);
   Serial.println("Loading Game..");
 
   // Clear the buffer

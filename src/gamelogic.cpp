@@ -19,22 +19,29 @@ const int LASER_HEIGHT = 3;
 // const int LASER_REMOVED_MARKER = 420; // Y value that signifies the current laser slot is not holding a laser
 // int _laser[MAX_LASERS][2]; // array representing the last x and y position of this laser.
 
+const int DIVE_INTERVAL = 1500; // no enemy must dive within this interval from the last dive.
+int _lastDive = 0;
+
+Audio* audio;
+
 /**
  * Called in setup.
 */
 void initializeActors() {
+
+  audio = new Audio(6);
 
   randomSeed(analogRead(5));
   _lostGame = false;
   _currentScore = 0;
 
   Serial.println("Initializing Actors...");
-  _ship = new Ship(0, 111, 7, 6);
-  _ship->recover();
 
     // initialize Ship
+  _ship = new Ship(0, 111, 7, 6);
+  _ship->recover();
   _ship->setSprite(epd_bitmap_ship);
-  _ship->setDrawBoundingBox(false);
+  _ship->setDrawBoundingBox(true);
   _ship->setDrawCenterW(true);
 
   int FORMATION_X_START = 2;
@@ -60,7 +67,7 @@ void initializeActors() {
     Serial.print(beey);
     Serial.println(".");
     _bee[i]->setSprite(epd_bitmap_bee);
-    _bee[i]->setDrawBoundingBox(true);
+    _bee[i]->setDrawBoundingBox(false);
 
     if (i != 0 && i % 8 == 0) {
       beex = FORMATION_X_START;
@@ -154,6 +161,7 @@ void newLaser(int x, int y) {
     Laser *pew = (_laser[newLaserIndex]);
     pew->setLocation(x, y);
     pew->show();
+    audio->setBlasterShot();
   }
 }
 
@@ -161,13 +169,19 @@ void newLaser(int x, int y) {
  * Selects one alive enemy to dive.
 */
 void randomDive() {
+  // 3 / 100 chance per frame
   long randLong = random(100);
-  if (randLong > 10) {
+  if (randLong > 3) {
     return;
   }
 
+  // choose one of the alive bees
   randLong = random(MAX_BEES);
-  _bee[randLong]->setDive(true);
+  Bee* b =_bee[randLong];
+  if (!b->isHidden() && !b->isDiving() && (millis() - _lastDive) > DIVE_INTERVAL) {
+    _bee[randLong]->setDive(true);
+    _lastDive = millis();
+  }
 }
 
 
@@ -181,6 +195,7 @@ int gameLoop() {
 
   randomDive();
 
+  // move ship
   int moveInput = analogRead(POT_PIN);
   int shipPosx = (int) ((moveInput / (float) 1023) * 64); // TODO smooth this for no jittering
 
@@ -200,8 +215,9 @@ int gameLoop() {
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
-  _lastPress = shootbtn;
+  audio->play();
 
+  _lastPress = shootbtn;
 
   return _lostGame;
 }
