@@ -26,7 +26,7 @@ void changeState(GAMESTATE newState) {
   case MENU:
     // _display.println("Loading Menu...");
     // _display.display();
-    // delay(2000);
+    delay(1000);
     break;
   case GAME:
     _display.println("Loading Game...");
@@ -38,7 +38,7 @@ void changeState(GAMESTATE newState) {
   case LOSE:
     // _display.println("Loading LOSE...");
     // _display.display();
-    delay(2000);
+    delay(1500);
   default:
     break;
   }
@@ -49,6 +49,7 @@ void changeState(GAMESTATE newState) {
 void setup() {
   Serial.begin(9600);
   pinMode(BLASTER_PIN, INPUT_PULLUP);
+  pinMode(10, INPUT_PULLUP);
 
   delay(2000);
 
@@ -127,7 +128,12 @@ void menu() {
 void game() {
   // Serial.println("game");
 
-  drawEnemies(_bee, MAX_BEES, _beeMovie);
+  if (_currentEnemyRoutine == FORMATION) {
+    drawEnemiesFormation(_bee, MAX_BEES, _beeMovie);
+  } else if (_currentEnemyRoutine == LINES) {
+    drawEnemiesLines(_bee, MAX_BEES, _beeMovie);
+  }
+
 
   int gameStatus = gameLoop();
 
@@ -136,6 +142,9 @@ void game() {
   }
 
   drawScore(SCORE, _currentScore);
+
+  _display.print("ded: ");
+  _display.println(_enemiesKilled);
 
   drawLasers(_laser, MAX_LASERS);
 

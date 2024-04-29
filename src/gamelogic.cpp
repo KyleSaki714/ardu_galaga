@@ -29,6 +29,8 @@ Audio* audio;
 */
 void initializeActors() {
 
+  _currentEnemyRoutine = FORMATION;
+
   audio = new Audio(6);
 
   randomSeed(analogRead(5));
@@ -128,6 +130,7 @@ void checkHits() {
     Bee *currentBee = _bee[j];
     if (currentBee->wasJustHit()) {
       updateScore(BEE);
+      _enemiesKilled++;
       currentBee->recover();
     }
   }
@@ -194,7 +197,9 @@ int gameLoop() {
   checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES, _ship);
   checkHits();
 
-  randomEnemyDive();
+  if (_currentEnemyRoutine == FORMATION) {
+    randomEnemyDive();
+  }
 
   // move ship
   int moveInput = analogRead(POT_PIN);
@@ -215,6 +220,15 @@ int gameLoop() {
   if (shootbtn != _lastPress && shootbtn == LOW) {
     newLaser(shipPosx, SHIP_Y_POS);
   }
+
+  if (digitalRead(10) == LOW) {
+    long randLong = random(MAX_BEES);
+    Bee* b =_bee[randLong];
+    b->recover();
+    b->show();
+    b->setLocation(random(0, 55), random(0, 120));
+  }
+
 
   audio->play();
 

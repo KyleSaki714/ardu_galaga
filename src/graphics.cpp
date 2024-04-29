@@ -38,7 +38,11 @@ void drawScore(const String scorePrefix, int points) {
   _display.print(points);
 }
 
-void drawEnemies(Bee** bees, int totalAmount, int beeWave) {
+/**
+ * totalAmount = total amount of bees
+ * beewave = value from 0 - 360
+*/
+void drawEnemiesFormation(Bee** bees, int totalAmount, int beeWave) {
   // beeWave = (beeWave + 10) % 360;
   float radian = (beeWave * M_PI) / 180;
   for (int j = 0; j < totalAmount; j++) {
@@ -46,12 +50,12 @@ void drawEnemies(Bee** bees, int totalAmount, int beeWave) {
     if (currentBee->isDiving()) {
       // fly towards ship
       float t = currentBee->getT();
-      Serial.print("t: ");
-      Serial.println(t);
-      Serial.print("new x: ");
-      Serial.println((1.0 - t) * currentBee->getX() + t * currentBee->getDiveTargetX() * 1.5);
-      Serial.print("new y: ");
-      Serial.println((1.0 - t) * currentBee->getY() + t * currentBee->getDiveTargetY() * 1.5);
+      // Serial.print("t: ");
+      // Serial.println(t);
+      // Serial.print("new x: ");
+      // Serial.println((1.0 - t) * currentBee->getX() + t * currentBee->getDiveTargetX() * 1.5);
+      // Serial.print("new y: ");
+      // Serial.println((1.0 - t) * currentBee->getY() + t * currentBee->getDiveTargetY() * 1.5);
       int newx = ceil((1.0 - t) * currentBee->getX() + t * currentBee->getDiveTargetX() * 1.5);
       int newy = ceil((1.0 - t) * currentBee->getY() + t * currentBee->getDiveTargetY() * 1.5);
       currentBee->incrementT();
@@ -78,6 +82,18 @@ void drawEnemies(Bee** bees, int totalAmount, int beeWave) {
     currentBee->draw(_display);
   }
 }
+
+void drawEnemiesLines(Bee** bees, int totalAmount, int beeWave) {
+  for (int j = 0; j < totalAmount; j++) {
+    Bee *currentBee = bees[j];
+
+    // test
+    currentBee->setLocation(currentBee->getX() + 1, currentBee->getY() + 1);
+
+    currentBee->draw(_display);
+  }
+}
+
 
 /**
  * Calculates the drawing of all lasers,

@@ -62,7 +62,8 @@ void checkCollisions(Laser** lasers, int maxLasers,
                      Ship* ship);
 
 void drawScore(const String scorePrefix, int points);
-void drawEnemies(Bee** bees, int totalAmount, int beeWave);
+void drawEnemiesFormation(Bee** bees, int totalAmount, int beeWave);
+void drawEnemiesLines(Bee** bees, int totalAmount, int beeWave);
 void drawLasers(Laser** lasers, int maxLasers);
 
 #endif
