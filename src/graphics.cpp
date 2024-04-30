@@ -66,15 +66,16 @@ void initializeFormation(Bee** bees, int totalBees) {
 }
 
 void initializeScatter(Bee** bees, int totalBees) {
-  int i = totalBees;
-  while ( i < totalBees) {
-    long randLong = random(totalBees);
-    Bee* bee = bees[randLong];
+  // int i = totalBees;
+  // while ( i < totalBees) {
+  for (int i = 0; i < totalBees; i++) {
+    // long randLong = random(totalBees);
+    Bee* bee = bees[i];
     bee->recover();
     bee->show();
-    bee->setLocation(random(0, 64), random(0, 80));
+    bee->setLocation(random(0, 64), random(0, 64));
     // give random initial t value
-    for (int j = 0; j < randLong; j++) {
+    for (int j = 0; j < i; j++) {
       bee->incrementT();
     }
   }
@@ -130,16 +131,28 @@ void drawEnemiesScatter(Bee** bees, int totalAmount, int beeWave) {
     Bee *currentBee = bees[j];
 
     // test
-    // currentBee->setLocation(currentBee->getX() + 1, currentBee->getY() + 1);
-    // currentBee->setX((currentBee->getX() + 1) % _display.width());
 
-    int randumb = (random(0, 2) - 2) * -1;
-    currentBee->setX(currentBee->getX() + randumb);
-    randumb = (random(0, 2) - 2) * -1;
-    currentBee->setY(currentBee->getY() + randumb);
+    if (currentBee->getT() > 0.001 * 13) {
+      currentBee->setX((currentBee->getX() + 1) % _display.width());
+    } else if (currentBee->getT() > 0.001 * 20) {
+      currentBee->setLocation(currentBee->getX(), currentBee->getY() + 1);
+    } else {
+      int randumb = (random(0, 2));
+      currentBee->setX(currentBee->getX() + randumb);
+      randumb = (random(0, 2));
+      currentBee->setY(currentBee->getY() + randumb);
+    }
     
     // currentBee->setLocation(currentBee->getX() + randumb, currentBee->getY() + randumb);
-    currentBee->setLocation(currentBee->getX() % _display.width(), currentBee->getY() % _display.height());
+    if (currentBee->getX() < 0) {
+      currentBee->setX(_display.width());
+    }
+    if (currentBee->getY() < 0) {
+      currentBee->setY(_display.height());
+    }
+
+
+    currentBee->setLocation((currentBee->getX() % _display.width()), (currentBee->getY() % _display.height()));
 
 
     currentBee->draw(_display);

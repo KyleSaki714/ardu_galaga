@@ -13,9 +13,10 @@
 const int BLASTER_PIN = 9;
 const int POT_PIN = A0;
 inline int _lastPress = HIGH;
+const int VIBROMOTOR_OUTPUT_PIN = 5; 
 
 // CONST EXPRESSIONS
-const int MAX_LASERS = 2; // max amount of lasers on the field at a time (default 2)
+const int MAX_LASERS = 8; // max amount of lasers on the field at a time (default 2)
 
 // CONST STRINGS
 const String BEE = "Bee";
@@ -35,6 +36,10 @@ inline bool _lostGame;
 inline int _shotsFired = 0;
 inline int _enemiesKilledTotal = 0;
 inline int _enemiesKilledSinceLastPhase = 0; // reset every phase
+
+inline int _firingRate = 200; // MS
+
+inline int _vibromotorStartTime = -1;
 
 typedef enum ENEMYROUTINE {
   FORMATION,

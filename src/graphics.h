@@ -18,9 +18,9 @@ const int LASER_SPEED = 6; // default is 8?
 inline Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 inline Adafruit_LIS3DH lis = Adafruit_LIS3DH();
-inline float _lisPrevYaccel = 0.0;
-inline const float MOVE_FIGHTER_THRESH = 0.34; // TODO smoothing
-inline int _shipMove = 0;
+// inline float _lisPrevYaccel = 0.0;
+// inline const float MOVE_FIGHTER_THRESH = 0.34; // TODO smoothing
+inline int _shipMove = 0; // should be a value between 0 and 64.
 
 // BITMAPS
 // 'ship', 7x6px

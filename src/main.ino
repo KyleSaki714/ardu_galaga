@@ -29,15 +29,17 @@ void changeState(GAMESTATE newState) {
     delay(1000);
     break;
   case GAME:
-    _display.println("Loading Game...");
+    _display.println("Loading...");
     _display.display();
     initializeActors();
     drawScore(SCORE, _currentScore);
     delay(2000);
     break;
   case LOSE:
-    // _display.println("Loading LOSE...");
-    // _display.display();
+    _display.println("BETTER LUCK NEXT TIME");
+    delay(500);
+    digitalWrite(VIBROMOTOR_OUTPUT_PIN, LOW);
+    _display.display();
     delay(1500);
   default:
     break;
@@ -49,7 +51,9 @@ void changeState(GAMESTATE newState) {
 void setup() {
   Serial.begin(9600);
   pinMode(BLASTER_PIN, INPUT_PULLUP);
-  pinMode(10, INPUT_PULLUP);
+  // pinMode(10, INPUT_PULLUP);
+  pinMode(A1, INPUT);
+  pinMode(5, OUTPUT);
 
   delay(2000);
 
@@ -122,17 +126,7 @@ void menu() {
   _display.println("FLY DESTROYER");
   _display.println("Press FIRE to start");
 
-  // lis.read();
-  // Serial.print("lis Y:  "); Serial.println(lis.y);
-
-  // lis.read();      // get X Y and Z data at once
-  // // Then print out the raw data
-  // Serial.print("X:  "); Serial.print(lis.x);
-  // Serial.print("  \tY:  "); Serial.print(lis.y);
-  // Serial.print("  \tZ:  "); Serial.print(lis.z);
-
-  sensors_event_t event;
-  lis.getEvent(&event);
+  // sensors_eve/t(&event);
 
   // /* Display the results (acceleration is measured in m/s^2) */
   // Serial.print("\t\tX: "); Serial.print(event.acceleration.x);
@@ -140,60 +134,10 @@ void menu() {
   // Serial.print(" \tZ: "); Serial.print(event.acceleration.z);
   // Serial.println(" m/s^2 ");
 
-  // // int pot = analogRead(POT_PIN);
-  // // float thresh =((pot / (float) 1023) * 2.0);
-
-  // // Serial.println(event.gyro.y);
-
-  // ship is upright
-  if (event.acceleration.z > 5) {
-    int moveAccel = map(event.acceleration.y, -9, 9, 0, 64);
-    _shipMove = moveAccel;
-    // if (_shipMove < 0) {
-    //   _shipMove = 0;
-    // }
-    // if (_shipMove > _display.width()) {
-    //   _shipMove = _display.width();
-    // }
-  }
-
-  Serial.println(_shipMove);
-
-  // if (event.acceleration.z > 5) {
-    // Serial.println("upright");
-
-
-
-    // if change in y direction
-    // float vel = abs(event.acceleration.y - _lisPrevYaccel);
-    // if (vel > MOVE_FIGHTER_THRESH) {
-    // // if (vel > thresh) {
-    //   // Serial.print("thresh value: ");
-    //   // Serial.print(thresh);
-    //   // Serial.println(" MOVE!!");
-    //   // Serial.print("y: "); Serial.print(event.acceleration.y);
-    //   // Serial.print(" prev: "); Serial.println(_lisPrevYaccel);
-
-    //   // if current is larger than previous, going right otherwise left
-    //   int direction = event.acceleration.y > _lisPrevYaccel ? 1 : -1;
-    //   _shipMove = (_shipMove + direction) % _display.width();
-    //   // Serial.println(_shipMove);
-    //   // if (event.acceleration.y > _lisPrevYaccel) {
-    //   //   Serial.println("right");
-    //   // } else {
-    //   //   Serial.println("left");
-    //   // }
-
-    // }
-  // }
-
-  _lisPrevYaccel = event.acceleration.y;
-
   int btnPress = digitalRead(BLASTER_PIN);
   if (btnPress != _lastPress && btnPress == LOW) {
     changeState(GAME);
   }
-
 
 }
 
@@ -202,22 +146,23 @@ void game() {
 
   if (_currentEnemyRoutine == FORMATION) {
     drawEnemiesFormation(_bee, MAX_BEES, _beeMovie);
-    _display.println("FORMATION");
+    // _display.println("FORMATION");
   } else if (_currentEnemyRoutine == SCATTER) {
     drawEnemiesScatter(_bee, MAX_BEES, _beeMovie);
-    _display.println("SCATTER");
+    // _display.println("SCATTER");
   }
 
 
   int gameStatus = gameLoop();
 
   if (gameStatus) {
+    digitalWrite(VIBROMOTOR_OUTPUT_PIN, HIGH);
     changeState(LOSE);
   }
 
   drawScore(SCORE, _currentScore);
 
-  _display.print(" p: ");
+  _display.print(" ded: ");
   _display.println(_enemiesKilledTotal);
 
   drawLasers(_laser, MAX_LASERS);

@@ -22,6 +22,10 @@ const int LASER_HEIGHT = 3;
 const int DIVE_INTERVAL = 1500; // no enemy must dive within this interval from the last dive.
 int _lastDive = 0;
 
+int _lastFireLaser = 0;
+
+int _lastEnemyRespawn = 0;
+
 Audio* audio;
 
 /**
@@ -174,6 +178,9 @@ void newLaser(int x, int y) {
     pew->setLocation(x, y);
     pew->show();
     audio->setBlasterShot();
+    Serial.println("vibro turn on");
+    digitalWrite(VIBROMOTOR_OUTPUT_PIN, HIGH);
+    _vibromotorStartTime = millis();
   }
 }
 
@@ -206,6 +213,8 @@ int gameLoop() {
   checkCollisions(_laser, MAX_LASERS, _bee, MAX_BEES, _ship);
   checkHits();
 
+
+
   if (_currentEnemyRoutine == FORMATION) {
     if (_enemiesKilledSinceLastPhase > 20) {
       _currentEnemyRoutine = SCATTER;
@@ -214,16 +223,34 @@ int gameLoop() {
     }
     randomEnemyDive();
   } else if (_currentEnemyRoutine == SCATTER) {
-    if (_enemiesKilledSinceLastPhase > 50) {
+    if (_enemiesKilledSinceLastPhase > 30) {
       _currentEnemyRoutine = FORMATION;
       _enemiesKilledSinceLastPhase = 0;
       initializeFormation(_bee, MAX_BEES);
     }
-    
+  }
+
+  int enemyRespawnRate = 2000;
+  if (_currentEnemyRoutine == SCATTER) {
+    enemyRespawnRate = 750;
+  }
+
+  // random enemy respawns every 2 secs
+  if (millis() - _lastEnemyRespawn > enemyRespawnRate) {
+    long randLong = random(MAX_BEES);
+    Bee* b =_bee[randLong];
+    b->recover();
+    b->show();
+    if (_currentEnemyRoutine == FORMATION) {
+      b->setLocation(b->getStartPositionX(), b->getStartPositionY());
+    } else if (_currentEnemyRoutine == SCATTER) {
+      b->setLocation(random(0,_display.width()), random(0, 80));
+    }
+    _lastEnemyRespawn = millis();
   }
 
   // move ship
-  int moveInput = analogRead(POT_PIN);
+  // int moveInput = analogRead(POT_PIN);
   // int shipPosx = (int) ((moveInput / (float) 1023) * 64); // TODO smooth this for no jittering
   int shipPosx = _shipMove;
 
@@ -231,15 +258,19 @@ int gameLoop() {
   lis.getEvent(&event);
 
   // ship is upright
-  if (event.acceleration.z > 5) {
-    int moveAccel = map(event.acceleration.y, -9, 9, 0, 64);
-    _shipMove = moveAccel;
-    // if (_shipMove < 0) {
-    //   _shipMove = 0;
-    // }
-    // if (_shipMove > _display.width()) {
-    //   _shipMove = _display.width();
-    // }
+  if (event.acceleration.z < -5) {
+    Serial.print("event.acceleration.x: "); Serial.print(event.acceleration.x);
+    float tilt = event.acceleration.x / 8.0;
+    Serial.print(" tilt: "); Serial.print(tilt);
+    // int moveAccel = map(event.acceleration.y, -9, 9, 0, 64);
+    _shipMove = (tilt * 32) + 32;
+    Serial.print(" _shipMove: "); Serial.println(_shipMove);
+    if (_shipMove < 0) {
+      _shipMove = 0;
+    }
+    if (_shipMove > _display.width()) {
+      _shipMove = _display.width();
+    }
   }
 
   // constrain ship movement
@@ -258,14 +289,24 @@ int gameLoop() {
     newLaser(shipPosx, SHIP_Y_POS);
   }
 
-  if (digitalRead(10) == LOW) {
-    long randLong = random(MAX_BEES);
-    Bee* b =_bee[randLong];
-    b->recover();
-    b->show();
-    b->setLocation(random(0, 64), random(0, 100));
+  int fsrVal = analogRead(A1);
+  fsrVal = 2000 - ((fsrVal / (float) 4095) * 2000);
+  if (fsrVal < 100) {
+    fsrVal = 100;
+  }
+  // Serial.println(fsrVal);
+  _firingRate = fsrVal;
+  // Serial.println(analogRead(A1));
+  if (analogRead(A1) > 5 && millis() - _lastFireLaser > _firingRate) {
+    newLaser(shipPosx, SHIP_Y_POS);
+    _lastFireLaser = millis();
   }
 
+  if (_vibromotorStartTime != -1 && millis() - _vibromotorStartTime > 100) {
+    digitalWrite(VIBROMOTOR_OUTPUT_PIN, LOW);
+    // Serial.println("vibro turn off");
+    _vibromotorStartTime = -1;
+  }
 
   audio->play();
 
