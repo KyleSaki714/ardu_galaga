@@ -60,6 +60,12 @@ void setup() {
   }
   Serial.println("Display Good");
 
+  if (! lis.begin(0x18)) {   // change this to 0x19 for alternative i2c address
+    Serial.println("Couldnt start");
+    for(;;);
+  }
+  Serial.println("LIS3DH Good");
+
   // IMPORTANT DISPLAY STUFF
   _display.clearDisplay();
   _display.setRotation(1); // ROTATE DISPLAY!!!
@@ -111,11 +117,77 @@ void loop() {
 }
 
 void menu() {
-  Serial.println("menu");
+  // Serial.println("menu");
   _display.setCursor(0, 5);
-  _display.println("FLY SWATTER");
+  _display.println("FLY DESTROYER");
   _display.println("Press FIRE to start");
 
+  // lis.read();
+  // Serial.print("lis Y:  "); Serial.println(lis.y);
+
+  // lis.read();      // get X Y and Z data at once
+  // // Then print out the raw data
+  // Serial.print("X:  "); Serial.print(lis.x);
+  // Serial.print("  \tY:  "); Serial.print(lis.y);
+  // Serial.print("  \tZ:  "); Serial.print(lis.z);
+
+  sensors_event_t event;
+  lis.getEvent(&event);
+
+  // /* Display the results (acceleration is measured in m/s^2) */
+  // Serial.print("\t\tX: "); Serial.print(event.acceleration.x);
+  // Serial.print(" \tY: "); Serial.print(event.acceleration.y);
+  // Serial.print(" \tZ: "); Serial.print(event.acceleration.z);
+  // Serial.println(" m/s^2 ");
+
+  // // int pot = analogRead(POT_PIN);
+  // // float thresh =((pot / (float) 1023) * 2.0);
+
+  // // Serial.println(event.gyro.y);
+
+  // ship is upright
+  if (event.acceleration.z > 5) {
+    int moveAccel = map(event.acceleration.y, -9, 9, 0, 64);
+    _shipMove = moveAccel;
+    // if (_shipMove < 0) {
+    //   _shipMove = 0;
+    // }
+    // if (_shipMove > _display.width()) {
+    //   _shipMove = _display.width();
+    // }
+  }
+
+  Serial.println(_shipMove);
+
+  // if (event.acceleration.z > 5) {
+    // Serial.println("upright");
+
+
+
+    // if change in y direction
+    // float vel = abs(event.acceleration.y - _lisPrevYaccel);
+    // if (vel > MOVE_FIGHTER_THRESH) {
+    // // if (vel > thresh) {
+    //   // Serial.print("thresh value: ");
+    //   // Serial.print(thresh);
+    //   // Serial.println(" MOVE!!");
+    //   // Serial.print("y: "); Serial.print(event.acceleration.y);
+    //   // Serial.print(" prev: "); Serial.println(_lisPrevYaccel);
+
+    //   // if current is larger than previous, going right otherwise left
+    //   int direction = event.acceleration.y > _lisPrevYaccel ? 1 : -1;
+    //   _shipMove = (_shipMove + direction) % _display.width();
+    //   // Serial.println(_shipMove);
+    //   // if (event.acceleration.y > _lisPrevYaccel) {
+    //   //   Serial.println("right");
+    //   // } else {
+    //   //   Serial.println("left");
+    //   // }
+
+    // }
+  // }
+
+  _lisPrevYaccel = event.acceleration.y;
 
   int btnPress = digitalRead(BLASTER_PIN);
   if (btnPress != _lastPress && btnPress == LOW) {

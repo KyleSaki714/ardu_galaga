@@ -2,6 +2,8 @@
 #define GRAPHICS_H_
 
 #include <Wire.h>
+#include <Adafruit_LIS3DH.h>
+#include <Adafruit_Sensor.h>
 #include "actor.h"
 
 const int LASER_SPEED = 6; // default is 8?
@@ -14,6 +16,11 @@ const int LASER_SPEED = 6; // default is 8?
 // Declaration for an SSD1306 _display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 inline Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+inline Adafruit_LIS3DH lis = Adafruit_LIS3DH();
+inline float _lisPrevYaccel = 0.0;
+inline const float MOVE_FIGHTER_THRESH = 0.34; // TODO smoothing
+inline int _shipMove = 0;
 
 // BITMAPS
 // 'ship', 7x6px

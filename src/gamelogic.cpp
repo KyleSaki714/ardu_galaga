@@ -224,7 +224,23 @@ int gameLoop() {
 
   // move ship
   int moveInput = analogRead(POT_PIN);
-  int shipPosx = (int) ((moveInput / (float) 1023) * 64); // TODO smooth this for no jittering
+  // int shipPosx = (int) ((moveInput / (float) 1023) * 64); // TODO smooth this for no jittering
+  int shipPosx = _shipMove;
+
+  sensors_event_t event;
+  lis.getEvent(&event);
+
+  // ship is upright
+  if (event.acceleration.z > 5) {
+    int moveAccel = map(event.acceleration.y, -9, 9, 0, 64);
+    _shipMove = moveAccel;
+    // if (_shipMove < 0) {
+    //   _shipMove = 0;
+    // }
+    // if (_shipMove > _display.width()) {
+    //   _shipMove = _display.width();
+    // }
+  }
 
   // constrain ship movement
   if (shipPosx < SHIP_MOVE_MARGIN) {
